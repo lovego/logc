@@ -1,0 +1,6 @@
+.*.swp
+*.test
+*.pyc
+tmp
+*.exe
+!.gitkeep

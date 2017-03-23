@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/csv"
 	"encoding/json"
 	"io"
 	"os"
@@ -13,14 +12,12 @@ import (
 
 type File struct {
 	Filepath string
-	Fields   string
 	Offset   int64
-	SetId    string
+	Org      string
 	file     *os.File
-	reader   *csv.Reader
 }
 
-func collector(infos map[string]fileInfo) {
+func collector(paths []string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		panic(err)
@@ -43,7 +40,7 @@ func collector(infos map[string]fileInfo) {
 		}
 	}()
 
-	for filepath, _ := range infos {
+	for _, filepath := range paths {
 		err = watcher.Add(filepath)
 		if err != nil {
 			printLog(filepath, ` notify error:`, err)
@@ -67,23 +64,17 @@ func (f *File) Collect() {
 	f.getFile()
 	f.checkFileOffset()
 	f.file.Seek(f.Offset, os.SEEK_CUR)
-
-	f.getReader()
-	fields := parseFields(f.Fields)
-	data := f.read(fields)
-	for len(data) > 0 {
-		printLog(`the number of push data:`, len(data))
-		f.push(data)
-		data = f.read(fields)
+	for content := f.read(); content != ``; content = f.read() {
+		f.push(content)
 	}
 	printLog(`all data has been pushed`)
 }
 
-func (f *File) read(fields [][2]string) []map[string]interface{} {
-	data := []map[string]interface{}{}
-
-	for i := 0; i < 1000; i++ {
-		row, err := f.reader.Read()
+func (f *File) read() string {
+	var content string
+	for {
+		b := make([]byte, 1024*100)
+		_, err := f.file.ReadAt(b, f.Offset)
 		if err == io.EOF {
 			break
 		}
@@ -91,18 +82,10 @@ func (f *File) read(fields [][2]string) []map[string]interface{} {
 			printLog(err)
 			continue
 		}
-
-		if len(row) != len(fields) {
-			continue
-		}
-		d := make(map[string]interface{})
-		for j, fieldInfo := range fields {
-			d[fieldInfo[0]] = row[j]
-		}
-		data = append(data, d)
+		f.curOff()
+		content += string(b)
 	}
-	f.curOff()
-	return data
+	return content
 }
 
 func (f *File) curOff() {
@@ -122,14 +105,6 @@ func (f *File) getFile() {
 		panic(err)
 	}
 	f.file = file
-}
-
-func (f *File) getReader() {
-	if f.reader != nil {
-		return
-	}
-	f.reader = csv.NewReader(f.file)
-	f.reader.Comma = ' '
 }
 
 func (f *File) checkFileOffset() {

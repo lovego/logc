@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"path"
-	"strconv"
 	"time"
 
 	"github.com/bughou-go/xiaomei/utils/httputil"
@@ -13,11 +12,9 @@ import (
 
 const timeout = time.Hour
 
-func (file *File) push(data []map[string]interface{}) {
+func (file *File) push(data string) {
 	d := make(map[string]interface{})
-	d[`offset`] = strconv.FormatInt(file.Offset, 10)
-	d[`set_id`] = file.SetId
-	d[`ips`] = getIP()
+	d[`org`] = file.Org
 	d[`filepath`] = file.Filepath
 	d[`data`] = data
 	content, err := json.Marshal(d)
@@ -29,7 +26,7 @@ func (file *File) push(data []map[string]interface{}) {
 		time.Sleep(sleepTime)
 		sleepTime *= 2
 		if sleepTime > timeout {
-			printLog("collect faild.", string(content))
+			printLog("collect faild.", data)
 			break
 		}
 	}
@@ -37,10 +34,8 @@ func (file *File) push(data []map[string]interface{}) {
 }
 
 func pushRemote(content []byte) bool {
+	data := make(map[string]string)
 	uri := `http://` + path.Join(remoteAddr, `logs-data`)
-	status, err := httputil.HttpStatus(http.MethodPost, uri, nil, bytes.NewBuffer(content))
-	if err != nil {
-		printLog(`push data error: `, err)
-	}
-	return status == 200
+	httputil.Http(http.MethodPost, uri, nil, bytes.NewBuffer(content), &data)
+	return data[`msg`] == `ok`
 }

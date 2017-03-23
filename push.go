@@ -12,7 +12,7 @@ import (
 
 const timeout = time.Hour
 
-func (file *File) push(data string) {
+func (file *File) push(data string) bool {
 	d := make(map[string]interface{})
 	d[`org`] = file.Org
 	d[`filepath`] = file.Filepath
@@ -27,10 +27,12 @@ func (file *File) push(data string) {
 		sleepTime *= 2
 		if sleepTime > timeout {
 			printLog("collect faild.", data)
-			break
+			sleepTime = 1 * time.Second
+			return false
 		}
 	}
 	sleepTime = 1 * time.Second
+	return true
 }
 
 func pushRemote(content []byte) bool {

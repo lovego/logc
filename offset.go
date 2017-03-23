@@ -20,7 +20,7 @@ const offsetDir = `/home/ubuntu/logs/logc/`
 const offsetFile = `offset.json`
 
 var offsetPath = path.Join(offsetDir, offsetFile)
-var offsetMap = struct {
+var offsetData = struct {
 	m map[string]int64
 	sync.RWMutex
 }{m: make(map[string]int64)}
@@ -37,25 +37,24 @@ func init() {
 	}
 }
 
-func getOffset(paths []string) map[string]int64 {
+func initOffset(paths []string) {
 	data := readOffset()
-	result := make(map[string]int64)
+	offsetData.RLock()
 	for _, p := range paths {
 		if data != nil {
-			result[p] = data[p]
+			offsetData.m[p] = data[p]
 		} else {
-			result[p] = 0
+			offsetData.m[p] = 0
 		}
 	}
-	return result
+	offsetData.RUnlock()
 }
 
-func updateOffset(infos []offsetInfo) bool {
-	data := make(map[string]int64)
-	for _, info := range infos {
-		data[info.FilePath] = info.Offset
-	}
-	return writeOffset(data)
+func updateOffset() bool {
+	offsetData.RLock()
+	success := writeOffset(offsetData.m)
+	offsetData.RUnlock()
+	return success
 }
 
 func readOffset() map[string]int64 {

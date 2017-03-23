@@ -65,7 +65,14 @@ func (f *File) Collect() {
 	f.checkFileOffset()
 	f.file.Seek(f.Offset, os.SEEK_CUR)
 	for content := f.read(); content != ``; content = f.read() {
-		f.push(content)
+		if f.push(content) {
+			offsetData.RLock()
+			offsetData.m[f.Filepath] = f.Offset
+			offsetData.RUnlock()
+			if !updateOffset() {
+				printLog(f.Filepath, `: update offset faild`)
+			}
+		}
 	}
 	printLog(`all data has been pushed`)
 }
@@ -108,6 +115,9 @@ func (f *File) getFile() {
 }
 
 func (f *File) checkFileOffset() {
+	offsetData.RLock()
+	f.Offset = offsetData.m[f.Filepath]
+	offsetData.RUnlock()
 	ret, err := f.file.Seek(0, os.SEEK_END)
 	if err != nil {
 		panic(err)

@@ -16,15 +16,16 @@ var monitorFiles = struct {
 
 func FileInfo(orgName string) {
 	fmt.Println(`remote address: `, remoteAddr)
-	data := []string{}
-	httputil.Http(http.MethodGet, `http://`+path.Join(remoteAddr, `files?org=`+orgName), nil, nil, &data)
-	initFiles(orgName, data)
-	collector(data)
+	paths := []string{}
+	httputil.Http(http.MethodGet, `http://`+path.Join(remoteAddr, `files?org=`+orgName), nil, nil, &paths)
+	initFiles(orgName, paths)
+	initOffset(paths)
+	collector(paths)
 }
 
-func initFiles(orgName string, data []string) {
+func initFiles(orgName string, paths []string) {
 	monitorFiles.RLock()
-	for _, filepath := range data {
+	for _, filepath := range paths {
 		monitorFiles.data[filepath] = &File{Filepath: filepath, Org: orgName}
 	}
 	monitorFiles.RUnlock()

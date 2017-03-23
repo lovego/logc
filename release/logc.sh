@@ -1,9 +1,9 @@
 #!/bin/bash
 
 main() {
-    token=$1
-    if test -z "$token"; then
-        echo "token is required"
+    org=$1
+    if test -z "$org"; then
+        echo "org is required"
         exit
     fi
     domain=$2
@@ -15,11 +15,11 @@ main() {
     fi
     make_log_dir $logc_log_path
 
-    nohup logc $token $domain > $logc_log_path/logc-$token.log 2>&1 &
+    nohup logc $org $domain > $logc_log_path/logc-$org.log 2>&1 &
 }
 
 download() {
-    logc_url="http://github.com/logc-monitor/logc/raw/master/logc"
+    logc_url="https://raw.githubusercontent.com/lovego/logc/master/release/logc"
 
     mkdir -p $1
     sudo wget -O $1/logc $logc_url

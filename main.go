@@ -30,8 +30,8 @@ func usage() {
 	fmt.Printf(`
 a client which listen files, collect contents, and push to server
 Usage:
-  logc <token> [address]
+  logc <org> [address]
   default address: %s
-  example: logc 47a09e6c862b4daf4113b6ec52d70d6a
+  example: logc data-visual
 `, defaultAddr)
 }

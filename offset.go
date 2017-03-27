@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -16,17 +16,15 @@ type offsetInfo struct {
 	Offset   int64  `json:"offset"`
 }
 
-const offsetDir = `/home/ubuntu/logs/logc/`
-const offsetFile = `offset.json`
+const offsetPath = `log/offset.json`
 
-var offsetPath = path.Join(offsetDir, offsetFile)
 var offsetData = struct {
 	m map[string]int64
 	sync.RWMutex
 }{m: make(map[string]int64)}
 
 func init() {
-	if err := os.MkdirAll(offsetDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Dir(offsetPath), os.ModePerm); err != nil {
 		panic(err)
 	}
 	if !fs.Exist(offsetPath) {

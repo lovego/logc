@@ -7,7 +7,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/bughou-go/xiaomei/utils/httputil"
+	"github.com/lovego/xiaomei/utils/httputil"
 )
 
 const timeout = time.Hour

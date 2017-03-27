@@ -6,7 +6,7 @@ import (
 	"path"
 	"sync"
 
-	"github.com/bughou-go/xiaomei/utils/httputil"
+	"github.com/lovego/xiaomei/utils/httputil"
 )
 
 var monitorFiles = struct {

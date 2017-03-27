@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/bughou-go/xiaomei/utils"
+	"github.com/lovego/xiaomei/utils"
 	"gopkg.in/fsnotify.v1"
 )
 

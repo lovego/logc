@@ -35,19 +35,11 @@ func init() {
 			panic(err)
 		}
 	}
+	initOffset()
 }
 
-func initOffset(paths []string) {
-	data := readOffset()
-	offsetData.RLock()
-	for _, p := range paths {
-		if data != nil {
-			offsetData.m[p] = data[p]
-		} else {
-			offsetData.m[p] = 0
-		}
-	}
-	offsetData.RUnlock()
+func initOffset() {
+	offsetData.m = readOffset()
 }
 
 func updateOffset() bool {

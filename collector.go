@@ -75,6 +75,7 @@ func (f *File) Collect() {
 		}
 	}
 	printLog(`all data has been pushed`)
+	f.updateFiles()
 }
 
 func (f *File) read() string {
@@ -112,6 +113,12 @@ func (f *File) getFile() {
 		panic(err)
 	}
 	f.file = file
+}
+
+func (f *File) updateFiles() {
+	monitorFiles.RLock()
+	monitorFiles.data[f.Filepath] = f
+	monitorFiles.RUnlock()
 }
 
 func (f *File) checkFileOffset() {

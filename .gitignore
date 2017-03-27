@@ -2,5 +2,6 @@
 *.test
 *.pyc
 tmp
+/logc
 *.exe
 !.gitkeep

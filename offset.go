@@ -59,7 +59,7 @@ func readOffset() map[string]int64 {
 	data := make(map[string]int64)
 	err = json.Unmarshal(b, &data)
 	if err != nil {
-		printLog(`read offset error:`, printLog)
+		printLog(`read offset error:`, err)
 		return nil
 	}
 	return data

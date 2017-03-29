@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strconv"
 
 	"github.com/lovego/xiaomei/utils"
 	"gopkg.in/fsnotify.v1"
@@ -35,7 +36,7 @@ func collector(paths []string) {
 					})
 				}
 			case err := <-watcher.Errors:
-				printLog("error:", err)
+				writeLog("error:", err.Error())
 			}
 		}
 	}()
@@ -43,20 +44,20 @@ func collector(paths []string) {
 	for _, filepath := range paths {
 		err = watcher.Add(filepath)
 		if err != nil {
-			printLog(filepath, ` notify error:`, err)
+			writeLog(filepath, `notify error:`, err.Error())
 			continue
 		}
-		printLog(`start notify file: `, filepath)
+		writeLog(`start notify file:`, filepath)
 	}
 	<-done
 }
 
 func collect(filepath string) {
-	printLog("change file: ", filepath)
+	writeLog("change file:", filepath)
 	monitorFiles.RLock()
 	file := monitorFiles.data[filepath]
 	monitorFiles.RUnlock()
-	printLog(`start collect log`)
+	writeLog(`start collect log`)
 	file.Collect()
 }
 
@@ -70,11 +71,11 @@ func (f *File) Collect() {
 			offsetData.m[f.Filepath] = f.Offset
 			offsetData.RUnlock()
 			if !updateOffset() {
-				printLog(f.Filepath, `: update offset faild`)
+				writeLog(f.Filepath, `: update offset faild`)
 			}
 		}
 	}
-	printLog(`all data has been pushed`)
+	writeLog(`all data has been pushed`)
 	f.updateFiles()
 }
 
@@ -87,7 +88,7 @@ func (f *File) read() string {
 			break
 		}
 		if err != nil {
-			printLog(err)
+			writeLog(err.Error())
 			continue
 		}
 		f.curOff()
@@ -129,7 +130,7 @@ func (f *File) checkFileOffset() {
 	if err != nil {
 		panic(err)
 	}
-	printLog(f.Filepath, " end offset: ", ret)
+	writeLog(f.Filepath, "end offset:", strconv.FormatInt(ret, 10))
 	f.file.Seek(0, os.SEEK_SET)
 	if ret < f.Offset {
 		f.Offset = 0

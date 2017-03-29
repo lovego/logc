@@ -59,7 +59,7 @@ func readOffset() map[string]int64 {
 	data := make(map[string]int64)
 	err = json.Unmarshal(b, &data)
 	if err != nil {
-		printLog(`read offset error:`, err)
+		writeLog(`read offset error:`, err.Error())
 		return nil
 	}
 	return data
@@ -69,7 +69,7 @@ func writeOffset(data map[string]int64) bool {
 	b, _ := json.Marshal(data)
 	err := ioutil.WriteFile(offsetPath, b, 0666)
 	if err != nil {
-		printLog(`write offset error:`, err)
+		writeLog(`write offset error:`, err.Error())
 		return false
 	}
 	return true

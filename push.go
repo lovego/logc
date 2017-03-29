@@ -26,7 +26,7 @@ func (file *File) push(data string) bool {
 		time.Sleep(sleepTime)
 		sleepTime *= 2
 		if sleepTime > timeout {
-			printLog("collect faild.", data)
+			writeLog("collect faild.\n", data)
 			sleepTime = 1 * time.Second
 			return false
 		}

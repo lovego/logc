@@ -34,6 +34,7 @@ func writeLog(data ...string) {
 	now := time.Now().In(time.FixedZone(`China`, 28800))
 	content := []string{now.String()}
 	content = append(content, data...)
+	content = append(content, "\n")
 	if _, err := f.WriteString(strings.Join(content, ` `)); err != nil {
 		panic(err)
 	}

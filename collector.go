@@ -57,12 +57,12 @@ func collect(filepath string) {
 	monitorFiles.RLock()
 	file := monitorFiles.data[filepath]
 	monitorFiles.RUnlock()
-	writeLog(`start collect log`)
 	file.Collect()
 }
 
 func (f *File) Collect() {
 	f.getFile()
+	f.updateFiles()
 	f.checkFileOffset()
 	f.file.Seek(f.Offset, os.SEEK_CUR)
 	for content := f.read(); content != ``; content = f.read() {
@@ -73,32 +73,37 @@ func (f *File) Collect() {
 			if !updateOffset() {
 				writeLog(f.Filepath, `: update offset faild`)
 			}
+		} else {
+			writeLog(`push faild`)
 		}
 	}
-	writeLog(`all data has been pushed`)
-	f.updateFiles()
+	writeLog(`collect complete`)
 }
 
 func (f *File) read() string {
 	var content string
-	for {
+	for done := false; !done; {
 		b := make([]byte, 1024*100)
 		_, err := f.file.ReadAt(b, f.Offset)
 		if err == io.EOF {
-			break
+			done = true
 		}
-		if err != nil {
+		if err != io.EOF && err != nil {
 			writeLog(err.Error())
 			continue
 		}
-		f.curOff()
 		content += string(b)
+		if done {
+			f.curOff(os.SEEK_END)
+		} else {
+			f.curOff(os.SEEK_CUR)
+		}
 	}
 	return content
 }
 
-func (f *File) curOff() {
-	off, err := f.file.Seek(0, os.SEEK_CUR)
+func (f *File) curOff(whence int) {
+	off, err := f.file.Seek(0, whence)
 	if err != nil {
 		panic(err)
 	}

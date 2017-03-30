@@ -12,21 +12,21 @@ import (
 
 const timeout = time.Hour
 
-func (file *File) push(data string) bool {
-	d := make(map[string]interface{})
+func (file *File) push(content string) bool {
+	d := make(map[string]string)
 	d[`org`] = file.Org
 	d[`filepath`] = file.Filepath
-	d[`data`] = data
-	content, err := json.Marshal(d)
+	d[`content`] = content
+	data, err := json.Marshal(d)
 	if err != nil {
 		panic(err)
 	}
 	sleepTime := 1 * time.Second
-	for success := pushRemote(content); !success; success = pushRemote(content) {
+	for success := pushRemote(data); !success; success = pushRemote(data) {
 		time.Sleep(sleepTime)
 		sleepTime *= 2
 		if sleepTime > timeout {
-			writeLog("collect faild.\n", data)
+			writeLog("collect faild.\n", content)
 			sleepTime = 1 * time.Second
 			return false
 		}
@@ -35,9 +35,9 @@ func (file *File) push(data string) bool {
 	return true
 }
 
-func pushRemote(content []byte) bool {
-	data := make(map[string]string)
+func pushRemote(data []byte) bool {
+	result := make(map[string]string)
 	uri := `http://` + path.Join(remoteAddr, `logs-data`)
-	httputil.Http(http.MethodPost, uri, nil, bytes.NewBuffer(content), &data)
-	return data[`msg`] == `ok`
+	httputil.Http(http.MethodPost, uri, nil, bytes.NewBuffer(data), &result)
+	return result[`msg`] == `ok`
 }

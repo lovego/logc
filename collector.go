@@ -84,7 +84,7 @@ func (f *File) read() string {
 	var content string
 	for done := false; !done; {
 		b := make([]byte, 1024*100)
-		_, err := f.file.ReadAt(b, f.Offset)
+		n, err := f.file.ReadAt(b, f.Offset)
 		if err == io.EOF {
 			done = true
 		}
@@ -92,7 +92,7 @@ func (f *File) read() string {
 			writeLog(err.Error())
 			continue
 		}
-		content += string(b)
+		content += string(b[:n])
 		if done {
 			f.curOff(os.SEEK_END)
 		} else {

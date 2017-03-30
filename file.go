@@ -11,58 +11,54 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
-type File struct {
-	Filepath string
-	Offset   int64
-	Org      string
-	file     *os.File
+type file struct {
+	org    string
+	path   string
+	file   *os.File
+	offset int64
 }
 
-func collector(paths []string) {
+func newFile(org, path string) *file {
+	f := &file{
+		org: org, path: path,
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		writeLog(`open`, path+`:`, err.Error())
+	}
+	f.file = file
+	return f
+}
+
+func (f *file) listen() {
+	writeLog(`listen`, filepath)
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		panic(err)
+		writeLog(`notify new:`, err.Error())
 	}
 	defer watcher.Close()
 
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Events:
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					utils.Protect(func() {
-						collect(event.Name)
-					})
-				}
-			case err := <-watcher.Errors:
-				writeLog("error:", err.Error())
-			}
-		}
-	}()
-
-	for _, filepath := range paths {
-		err = watcher.Add(filepath)
-		if err != nil {
-			writeLog(filepath, `notify error:`, err.Error())
-			continue
-		}
-		writeLog(`start notify file:`, filepath)
+	if err := watcher.Add(filepath); err != nil {
+		writeLog(`notify add`, filepath+`:`, err.Error())
 	}
-	<-done
+
+	for {
+		select {
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				utils.Protect(func() {
+					f.collect()
+				})
+			}
+		case err := <-watcher.Errors:
+			writeLog(`notify error:`, err.Error())
+		}
+	}
 }
 
-func collect(filepath string) {
-	writeLog("change file:", filepath)
-	monitorFiles.RLock()
-	file := monitorFiles.data[filepath]
-	monitorFiles.RUnlock()
-	file.Collect()
-}
-
-func (f *File) Collect() {
-	f.getFile()
-	f.updateFiles()
+func (f *File) collect() {
+	writeLog(`collect file:`, f.path)
 	f.checkFileOffset()
 	f.file.Seek(f.Offset, os.SEEK_CUR)
 	for content := f.read(); content != ``; content = f.read() {
@@ -108,23 +104,6 @@ func (f *File) curOff(whence int) {
 		panic(err)
 	}
 	f.Offset = off
-}
-
-func (f *File) getFile() {
-	if f.file != nil {
-		return
-	}
-	file, err := os.Open(f.Filepath)
-	if err != nil {
-		panic(err)
-	}
-	f.file = file
-}
-
-func (f *File) updateFiles() {
-	monitorFiles.RLock()
-	monitorFiles.data[f.Filepath] = f
-	monitorFiles.RUnlock()
 }
 
 func (f *File) checkFileOffset() {

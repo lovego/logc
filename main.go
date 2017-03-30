@@ -3,7 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
+	"path"
+	"sync"
+
+	"github.com/lovego/xiaomei/utils/httputil"
 )
 
 const defaultAddr = `192.168.202.12:30432`
@@ -11,24 +16,43 @@ const defaultAddr = `192.168.202.12:30432`
 var remoteAddr string
 
 func main() {
-	flag.Parse()
-	params := flag.Args()
-	if len(params) < 1 {
-		usage()
-		os.Exit(1)
-	}
-	if len(params) > 1 {
-		remoteAddr = params[1]
-	}
+	orgName, remoteAddr := getParams()
 	if remoteAddr == `` {
 		remoteAddr = defaultAddr
 	}
-	FileInfo(params[0])
+	fmt.Println(`remote address: `, remoteAddr)
+	listenOrgFiles(orgName)
+	select {}
+}
+
+func listenOrgFiles(orgName string) {
+	paths := []string{}
+	httputil.Http(http.MethodGet, `http://`+path.Join(remoteAddr, `files?org=`+orgName), nil, nil, &paths)
+	for _, p := range paths {
+		go newFile(orgName, p).listen()
+	}
+}
+
+func getParams() (orgName, remoteAddr string) {
+	flagset := flag.NewFlagSet(os.Args[0], ExitOnError)
+	flagset.Usage = usage
+	help := flagset.Bool(`help`, false, `print usage info.`)
+	flagset.Parse(os.Args[1:])
+	args := flagset.Args()
+
+	if len(args) == 0 || len(args) > 2 || *help {
+		usage()
+		os.Exit(1)
+	}
+	orgName = args[0]
+	if len(args) >= 1 {
+		remoteAddr = args[1]
+	}
+	return
 }
 
 func usage() {
-	fmt.Printf(`
-a client which listen files, collect contents, and push to server
+	fmt.Printf(`a client which listen files, collect contents, and push to server
 Usage:
   logc <org> [address]
   default address: %s

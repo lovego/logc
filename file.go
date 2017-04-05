@@ -31,7 +31,7 @@ func newFile(org, path string) *file {
 }
 
 func (f *file) listen() {
-	writeLog(`listen`, filepath)
+	writeLog(`listen`, f.path)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -39,8 +39,8 @@ func (f *file) listen() {
 	}
 	defer watcher.Close()
 
-	if err := watcher.Add(filepath); err != nil {
-		writeLog(`notify add`, filepath+`:`, err.Error())
+	if err := watcher.Add(f.path); err != nil {
+		writeLog(`notify add`, f.path+`:`, err.Error())
 	}
 
 	for {
@@ -57,7 +57,8 @@ func (f *file) listen() {
 	}
 }
 
-func (f *File) collect() {
+// 如果文件被清空
+func (f *file) collect() {
 	writeLog(`collect file:`, f.path)
 	f.checkFileOffset()
 	f.file.Seek(f.Offset, os.SEEK_CUR)
@@ -76,7 +77,7 @@ func (f *File) collect() {
 	writeLog(`collect complete`)
 }
 
-func (f *File) read() string {
+func (f *file) read() string {
 	var content string
 	for done := false; !done; {
 		b := make([]byte, 1024*100)
@@ -98,7 +99,7 @@ func (f *File) read() string {
 	return content
 }
 
-func (f *File) curOff(whence int) {
+func (f *file) curOff(whence int) {
 	off, err := f.file.Seek(0, whence)
 	if err != nil {
 		panic(err)
@@ -106,7 +107,7 @@ func (f *File) curOff(whence int) {
 	f.Offset = off
 }
 
-func (f *File) checkFileOffset() {
+func (f *file) checkFileOffset() {
 	offsetData.RLock()
 	f.Offset = offsetData.m[f.Filepath]
 	offsetData.RUnlock()

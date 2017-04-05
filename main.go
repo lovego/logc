@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"sync"
 
 	"github.com/lovego/xiaomei/utils/httputil"
 )
@@ -34,7 +33,7 @@ func listenOrgFiles(orgName string) {
 }
 
 func getParams() (orgName, remoteAddr string) {
-	flagset := flag.NewFlagSet(os.Args[0], ExitOnError)
+	flagset := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flagset.Usage = usage
 	help := flagset.Bool(`help`, false, `print usage info.`)
 	flagset.Parse(os.Args[1:])

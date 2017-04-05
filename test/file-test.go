@@ -12,10 +12,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	reader := bufio.NewReader(f)
 	for {
 		printOffset(f)
-		readData(reader)
+		readData(f)
 		printOffset(f)
 
 		waitInput()
@@ -30,11 +29,12 @@ func printOffset(f *os.File) {
 	}
 }
 
-func readData(reader *bufio.Reader) {
-	if line, err := reader.ReadString('\n'); err != nil && err != io.EOF {
+func readData(f *os.File) {
+	buf := make([]byte, 7)
+	if n, err := f.Read(buf); err != nil && err != io.EOF {
 		panic(err)
 	} else {
-		fmt.Printf("data: %d %#v\n", len(line), line)
+		fmt.Printf("data: %d %#v\n", n, string(buf[:n]))
 	}
 }
 

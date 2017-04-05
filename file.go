@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/csv"
 	"io"
 	"os"
 	"strconv"
@@ -16,6 +16,7 @@ type file struct {
 	path   string
 	file   *os.File
 	offset int64
+	csv    *csv.Reader
 }
 
 func newFile(org, path string) *file {
@@ -57,7 +58,6 @@ func (f *file) listen() {
 	}
 }
 
-// 如果文件被清空
 func (f *file) collect() {
 	writeLog(`collect file:`, f.path)
 	f.checkFileOffset()
@@ -77,7 +77,7 @@ func (f *file) collect() {
 	writeLog(`collect complete`)
 }
 
-func (f *file) read() string {
+func (f *file) read() []string {
 	var content string
 	for done := false; !done; {
 		b := make([]byte, 1024*100)
@@ -107,10 +107,9 @@ func (f *file) curOff(whence int) {
 	f.Offset = off
 }
 
-func (f *file) checkFileOffset() {
-	offsetData.RLock()
-	f.Offset = offsetData.m[f.Filepath]
-	offsetData.RUnlock()
+// 如果文件被截短，把文件offset移动到开头
+func (f *file) seekFrontIfTruncated() {
+	os.Stat(f.path)
 	ret, err := f.file.Seek(0, os.SEEK_END)
 	if err != nil {
 		panic(err)
@@ -120,14 +119,4 @@ func (f *file) checkFileOffset() {
 	if ret < f.Offset {
 		f.Offset = 0
 	}
-}
-
-func parseFields(fieldsStr string) [][2]string {
-	fields := [][2]string{}
-	b := bytes.NewBufferString(fieldsStr).Bytes()
-	err := json.Unmarshal(b, &fields)
-	if err != nil {
-		panic(err)
-	}
-	return fields
 }

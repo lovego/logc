@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/csv"
 	"io"
 	"os"
@@ -28,6 +27,7 @@ func newFile(org, path string) *file {
 		writeLog(`open`, path+`:`, err.Error())
 	}
 	f.file = file
+	f.offset = offsetData.m[path]
 	return f
 }
 
@@ -60,15 +60,17 @@ func (f *file) listen() {
 
 func (f *file) collect() {
 	writeLog(`collect file:`, f.path)
-	f.checkFileOffset()
-	f.file.Seek(f.Offset, os.SEEK_CUR)
-	for content := f.read(); content != ``; content = f.read() {
-		if f.push(content) {
+	f.csvReader()
+	f.seekFrontIfTruncated()
+	f.file.Seek(f.offset, os.SEEK_CUR)
+	for data := f.read(); len(data) > 0; data = f.read() {
+		if f.push(data) {
+			writeLog(`the number of push data:`, strconv.Itoa(len(data)))
 			offsetData.RLock()
-			offsetData.m[f.Filepath] = f.Offset
+			offsetData.m[f.path] = f.offset
 			offsetData.RUnlock()
 			if !updateOffset() {
-				writeLog(f.Filepath, `: update offset faild`)
+				writeLog(f.path, `: update offset faild`)
 			}
 		} else {
 			writeLog(`push faild`)
@@ -77,46 +79,47 @@ func (f *file) collect() {
 	writeLog(`collect complete`)
 }
 
-func (f *file) read() []string {
-	var content string
-	for done := false; !done; {
-		b := make([]byte, 1024*100)
-		n, err := f.file.ReadAt(b, f.Offset)
+func (f *file) read() [][]string {
+	data := [][]string{}
+	for i := 0; i < 1000; i++ {
+		row, err := f.csv.Read()
 		if err == io.EOF {
-			done = true
+			break
 		}
-		if err != io.EOF && err != nil {
+		if err != nil {
 			writeLog(err.Error())
 			continue
 		}
-		content += string(b[:n])
-		if done {
-			f.curOff(os.SEEK_END)
-		} else {
-			f.curOff(os.SEEK_CUR)
-		}
+		data = append(data, row)
 	}
-	return content
+	f.curOff()
+	return data
 }
 
-func (f *file) curOff(whence int) {
-	off, err := f.file.Seek(0, whence)
+func (f *file) curOff() {
+	off, err := f.file.Seek(0, os.SEEK_CUR)
 	if err != nil {
 		panic(err)
 	}
-	f.Offset = off
+	f.offset = off
+}
+
+func (f *file) csvReader() {
+	if f.csv == nil {
+		f.csv = csv.NewReader(f.file)
+		f.csv.Comma = ' '
+	}
 }
 
 // 如果文件被截短，把文件offset移动到开头
 func (f *file) seekFrontIfTruncated() {
-	os.Stat(f.path)
 	ret, err := f.file.Seek(0, os.SEEK_END)
 	if err != nil {
 		panic(err)
 	}
-	writeLog(f.Filepath, "end offset:", strconv.FormatInt(ret, 10))
+	writeLog(f.path, "end offset:", strconv.FormatInt(ret, 10))
 	f.file.Seek(0, os.SEEK_SET)
-	if ret < f.Offset {
-		f.Offset = 0
+	if ret < f.offset {
+		f.offset = 0
 	}
 }

@@ -15,8 +15,9 @@ const defaultAddr = `192.168.202.12:30432`
 var remoteAddr string
 
 func main() {
-	orgName, remoteAddr := getParams()
-	if remoteAddr == `` {
+	orgName, addr := getParams()
+	remoteAddr = addr
+	if addr == `` {
 		remoteAddr = defaultAddr
 	}
 	fmt.Println(`remote address: `, remoteAddr)
@@ -44,7 +45,7 @@ func getParams() (orgName, remoteAddr string) {
 		os.Exit(1)
 	}
 	orgName = args[0]
-	if len(args) >= 1 {
+	if len(args) > 1 {
 		remoteAddr = args[1]
 	}
 	return

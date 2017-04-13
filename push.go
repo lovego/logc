@@ -10,7 +10,7 @@ import (
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-const timeout = time.Hour
+const maxTime = time.Hour
 
 func (f *file) push(data [][]string) bool {
 	d := make(map[string]interface{})
@@ -25,10 +25,8 @@ func (f *file) push(data [][]string) bool {
 	for success := pushRemote(content); !success; success = pushRemote(content) {
 		time.Sleep(sleepTime)
 		sleepTime *= 2
-		if sleepTime > timeout {
-			writeLog("collect faild.\n", string(content))
-			sleepTime = 1 * time.Second
-			return false
+		if sleepTime >= maxTime {
+			sleepTime = maxTime
 		}
 	}
 	sleepTime = 1 * time.Second

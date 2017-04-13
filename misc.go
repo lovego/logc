@@ -10,7 +10,7 @@ import (
 var logFile *os.File
 
 func init() {
-	var logPath = `log/logc.log`
+	var logPath = `logc/logc.log`
 	if err := os.MkdirAll(filepath.Dir(logPath), os.ModePerm); err != nil {
 		panic(err)
 	}

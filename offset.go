@@ -16,7 +16,7 @@ type offsetInfo struct {
 	Offset   int64  `json:"offset"`
 }
 
-const offsetPath = `log/offset.json`
+const offsetPath = `logc/offset.json`
 
 var offsetData = struct {
 	m map[string]int64

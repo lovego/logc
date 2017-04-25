@@ -37,13 +37,17 @@ func init() {
 }
 
 func initOffset() {
-	offsetData.m = readOffset()
+	m := readOffset()
+	if m != nil {
+		offsetData.m = m
+	}
 }
 
-func updateOffset() bool {
-	offsetData.RLock()
+func updateOffset(path string, offset int64) bool {
+	offsetData.Lock()
+	offsetData.m[path] = offset
 	success := writeOffset(offsetData.m)
-	offsetData.RUnlock()
+	offsetData.Unlock()
 	return success
 }
 

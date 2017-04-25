@@ -66,10 +66,7 @@ func (f *file) collect() {
 	for data := f.read(); len(data) > 0; data = f.read() {
 		if f.push(data) {
 			writeLog(`the number of push data:`, strconv.Itoa(len(data)))
-			offsetData.RLock()
-			offsetData.m[f.path] = f.offset
-			offsetData.RUnlock()
-			if !updateOffset() {
+			if !updateOffset(f.path, f.offset) {
 				writeLog(f.path, `: update offset faild`)
 			}
 		} else {

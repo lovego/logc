@@ -19,7 +19,7 @@ main() {
 }
 
 download() {
-    logc_url="https://raw.githubusercontent.com/lovego/logc/master/release/logc"
+    logc_url="http://github.com/lovego/logc/blob/master/release/logc?raw=true"
 
     mkdir -p $1
     sudo wget -O $1/logc $logc_url

@@ -6,6 +6,7 @@ main() {
         echo "org is required"
         exit
     fi
+    path=$(pwd)
     domain=$2
     logc_path="/usr/local/bin"
     logc_log_path="/var/log/logc"
@@ -15,11 +16,11 @@ main() {
     fi
     make_log_dir $logc_log_path
 
-    nohup logc $org $domain > $logc_log_path/logc-$org.log 2>&1 &
+    cd $path && nohup logc $org $domain > $logc_log_path/logc-$org.log 2>&1 &
 }
 
 download() {
-    logc_url="http://github.com/lovego/logc/blob/master/release/logc?raw=true"
+    logc_url="http://github.com/lovego/logc/raw/master/release/logc"
 
     mkdir -p $1
     sudo wget -O $1/logc $logc_url

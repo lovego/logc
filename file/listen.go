@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"os"
 	pathpkg "path"
 	"strconv"
 	"time"
@@ -15,34 +14,33 @@ import (
 )
 
 func (f *File) Listen() {
-	writeLog(`listen ` + f.path)
+	utils.Log(`listen ` + f.path)
+	f.log(`listen ` + f.path)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		writeLog(`notify new:`, err.Error())
+		utils.Log((`notify new: ` + err.Error())
 	}
 	defer watcher.Close()
 
 	if err := watcher.Add(f.path); err != nil {
-		writeLog(`notify add`, f.path+`:`, err.Error())
+		utils.Log(`notify add ` + f.path+`:`, err.Error())
 	}
 
 	for {
 		select {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				utils.Protect(func() {
-					f.collect()
-				})
+				utils.Protect(f.collect)
 			}
 		case err := <-watcher.Errors:
-			writeLog(`notify error:`, err.Error())
+			f.log(`notify error:`, err.Error())
 		}
 	}
 }
 
 func (f *File) collect() {
-	writeLog(`collect file:`, f.path)
+	f.log(`collect file:` + f.path)
 	f.seekFrontIfTruncated()
 	for rows := f.read(); len(rows) > 0; rows = f.read() {
 		if f.push(rows) {
@@ -68,21 +66,6 @@ func (f *File) read() []map[string]interface{} {
 		rows = append(rows, row)
 	}
 	return rows
-}
-
-// 如果文件被截短，把文件seek到开头
-func (f *File) seekFrontIfTruncated() {
-	offset, err := f.file.Seek(0, os.SEEK_CUR)
-	if err != nil {
-		panic(err)
-	}
-	info, err := os.Stat(f.path)
-	if err != nil {
-		panic(err)
-	}
-	if offset > info.Size() {
-		f.file.Seek(0, os.SEEK_SET)
-	}
 }
 
 func (f *File) push(rows []map[string]interface{}) bool {

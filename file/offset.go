@@ -11,6 +11,21 @@ import (
 	"github.com/lovego/xiaomei/utils/fs"
 )
 
+// 如果文件被截短，把文件seek到开头
+func (f *File) seekFrontIfTruncated() {
+	offset, err := f.file.Seek(0, os.SEEK_CUR)
+	if err != nil {
+		panic(err)
+	}
+	info, err := f.file.Stat()
+	if err != nil {
+		panic(err)
+	}
+	if offset > info.Size() {
+		f.file.Seek(0, os.SEEK_SET)
+	}
+}
+
 func (f *File) readOffset() int64 {
 	path := f.name + `/` + f.name + `.offset`
 	if !fs.Exist(path) {

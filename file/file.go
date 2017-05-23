@@ -9,7 +9,7 @@ import (
 
 type File struct {
 	org, name, path string
-	file, log       *os.File
+	file, logFile   *os.File
 	reader          *json.Decoder
 }
 
@@ -18,7 +18,7 @@ func New(org, name, path string) *File {
 	if f.file = f.openFile(); f.file == nil {
 		return nil
 	}
-	if f.log = f.openLog(); f.log == nil {
+	if f.logFile = f.openLog(); f.logFile == nil {
 		return nil
 	}
 	f.reader = json.NewDecoder(f.file)
@@ -49,4 +49,8 @@ func (f *File) openLog() *os.File {
 		panic(err)
 	}
 	return log
+}
+
+func (f *File) log(msg string) {
+	utils.Logf(f.logFile, msg)
 }

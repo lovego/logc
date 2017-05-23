@@ -3,9 +3,3 @@
 cd $(dirname $0)
 
 GOBIN=$(pwd)/release go install
-
-xmlogc=$GOPATH/src/github.com/lovego/xiaomei/xiaomei/new/z-bases/logc/
-cp release/logc $xmlogc
-cd $xmlogc && ./build
-
-docker push 192.168.202.12:5000/xiaomei/logc

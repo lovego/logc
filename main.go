@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sync"
 
+	filepkg "github.com/lovego/logc/file"
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
@@ -22,15 +24,23 @@ func main() {
 	}
 	fmt.Println(`remote address: `, remoteAddr)
 	listenOrgFiles(orgName)
-	select {}
+	// select {}
 }
 
 func listenOrgFiles(orgName string) {
 	paths := []string{}
 	httputil.Http(http.MethodGet, `http://`+path.Join(remoteAddr, `files?org=`+orgName), nil, nil, &paths)
+	wg := sync.WaitGroup{}
 	for _, p := range paths {
-		go newFile(orgName, p).listen()
+		if file := filepkg.New(orgName, p); file != nil {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				file.listen()
+			}()
+		}
 	}
+	wg.Wait()
 }
 
 func getParams() (orgName, remoteAddr string) {

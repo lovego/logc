@@ -19,12 +19,12 @@ func (f *File) Listen() {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		utils.Log((`notify new: ` + err.Error())
+		utils.Log(`notify new: ` + err.Error())
 	}
 	defer watcher.Close()
 
 	if err := watcher.Add(f.path); err != nil {
-		utils.Log(`notify add ` + f.path+`:`, err.Error())
+		utils.Log(`notify add ` + f.path + `: ` + err.Error())
 	}
 
 	for {
@@ -34,41 +34,34 @@ func (f *File) Listen() {
 				utils.Protect(f.collect)
 			}
 		case err := <-watcher.Errors:
-			f.log(`notify error:`, err.Error())
+			f.log(`notify error: ` + err.Error())
 		}
 	}
 }
 
 func (f *File) collect() {
-	f.log(`collect file:` + f.path)
 	f.seekFrontIfTruncated()
 	for rows := f.read(); len(rows) > 0; rows = f.read() {
-		if f.push(rows) {
-			writeLog(`the number of push rows:`, strconv.Itoa(len(rows)))
-			if !f.writeOffset() {
-				writeLog(f.path, `: update offset faild`)
-			}
-		} else {
-			writeLog(`push faild`)
-		}
+		f.push(rows)
+		offsetStr := f.writeOffset()
+		f.log(strconv.Itoa(len(rows)) + `, ` + offsetStr)
 	}
-	writeLog(`collect complete`)
 }
 
 func (f *File) read() []map[string]interface{} {
 	rows := []map[string]interface{}{}
 	for i := 0; i < 1000 && f.reader.More(); i++ {
 		var row map[string]interface{}
-		if err := f.reader.Decode(&row); err != nil {
-			writeLog(err.Error())
-			continue
+		if err := f.reader.Decode(&row); err == nil {
+			rows = append(rows, row)
+		} else {
+			f.log(`decode error: ` + err.Error())
 		}
-		rows = append(rows, row)
 	}
 	return rows
 }
 
-func (f *File) push(rows []map[string]interface{}) bool {
+func (f *File) push(rows []map[string]interface{}) {
 	body := map[string]interface{}{`org`: f.org, `file`: f.name, `data`: rows}
 	content, err := json.Marshal(body)
 	if err != nil {
@@ -78,7 +71,7 @@ func (f *File) push(rows []map[string]interface{}) bool {
 	const max = time.Hour
 	for interval := time.Second; ; {
 		if push2Logd(content) {
-			return true
+			return
 		}
 		time.Sleep(interval)
 		if interval < max {
@@ -88,7 +81,6 @@ func (f *File) push(rows []map[string]interface{}) bool {
 			}
 		}
 	}
-	return false
 }
 
 var LogdAddr string

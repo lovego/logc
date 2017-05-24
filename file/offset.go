@@ -15,13 +15,15 @@ import (
 func (f *File) seekFrontIfTruncated() {
 	offset, err := f.file.Seek(0, os.SEEK_CUR)
 	if err != nil {
-		panic(err)
+		f.log(`get current offset error: ` + err.Error())
+		return
 	}
-	info, err := f.file.Stat()
+	fi, err := f.file.Stat()
 	if err != nil {
-		panic(err)
+		f.log(`stat file error: ` + err.Error())
+		return
 	}
-	if offset > info.Size() {
+	if offset > fi.Size() {
 		f.file.Seek(0, os.SEEK_SET)
 	}
 }
@@ -44,16 +46,17 @@ func (f *File) readOffset() int64 {
 	return offset
 }
 
-func (f *File) writeOffset() bool {
+func (f *File) writeOffset() string {
 	offset, err := f.file.Seek(0, os.SEEK_CUR)
 	if err != nil {
-		writeLog(`get current offset:`, err.Error())
+		f.log(`get current offset error: ` + err.Error())
+		return ``
 	}
 	offsetStr := strconv.FormatInt(offset, 10)
+
 	path := f.name + `/` + f.name + `.offset`
 	if err := ioutil.WriteFile(path, []byte(offsetStr), 0666); err != nil {
-		writeLog(`write offset error:`, err.Error())
-		return false
+		f.log(`write offset error: ` + err.Error())
 	}
-	return true
+	return offsetStr
 }

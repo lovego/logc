@@ -12,24 +12,21 @@ import (
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-const defaultAddr = `192.168.202.12:30432`
-
-var remoteAddr string
+const defaultLogdAddr = `192.168.202.12:30432`
 
 func main() {
-	orgName, addr := getParams()
-	remoteAddr = addr
-	if addr == `` {
-		remoteAddr = defaultAddr
+	orgName, logdAddr := getParams()
+	if logdAddr == `` {
+		logdAddr = defaultLogdAddr
 	}
-	fmt.Println(`remote address: `, remoteAddr)
+	fmt.Println(`remote address: `, logdAddr)
 	listenOrgFiles(orgName)
 	// select {}
 }
 
 func listenOrgFiles(orgName string) {
 	paths := []string{}
-	httputil.Http(http.MethodGet, `http://`+path.Join(remoteAddr, `files?org=`+orgName), nil, nil, &paths)
+	httputil.Http(http.MethodGet, `http://`+pathpkg.Join(remoteAddr, `files?org=`+orgName), nil, nil, &paths)
 	wg := sync.WaitGroup{}
 	for _, p := range paths {
 		if file := filepkg.New(orgName, p); file != nil {

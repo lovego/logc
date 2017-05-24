@@ -5,42 +5,42 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path"
 	"sync"
 
 	filepkg "github.com/lovego/logc/file"
+	"github.com/lovego/xiaomei/utils"
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
 const defaultLogdAddr = `192.168.202.12:30432`
 
 func main() {
-	orgName, logdAddr := getParams()
+	org, logdAddr := getParams()
 	if logdAddr == `` {
 		logdAddr = defaultLogdAddr
 	}
-	fmt.Println(`remote address: `, logdAddr)
-	listenOrgFiles(orgName)
+	utils.Log(`logc starting. (logd: ` + logdAddr + `)`)
+	listenOrgFiles(org, logdAddr)
 	// select {}
 }
 
-func listenOrgFiles(orgName string) {
-	paths := []string{}
-	httputil.Http(http.MethodGet, `http://`+pathpkg.Join(remoteAddr, `files?org=`+orgName), nil, nil, &paths)
+func listenOrgFiles(org, logdAddr string) {
+	files := map[string]string{}
+	httputil.Http(http.MethodGet, `http://`+logdAddr+`/files?org=`+org, nil, nil, &files)
 	wg := sync.WaitGroup{}
-	for _, p := range paths {
-		if file := filepkg.New(orgName, p); file != nil {
+	for name, path := range files {
+		if file := filepkg.New(org, name, path); file != nil {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				file.listen()
+				file.Listen()
 			}()
 		}
 	}
 	wg.Wait()
 }
 
-func getParams() (orgName, remoteAddr string) {
+func getParams() (org, logdAddr string) {
 	flagset := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flagset.Usage = usage
 	help := flagset.Bool(`help`, false, `print usage info.`)
@@ -51,18 +51,18 @@ func getParams() (orgName, remoteAddr string) {
 		usage()
 		os.Exit(1)
 	}
-	orgName = args[0]
+	org = args[0]
 	if len(args) > 1 {
-		remoteAddr = args[1]
+		logdAddr = args[1]
 	}
 	return
 }
 
 func usage() {
-	fmt.Printf(`a client which listen files, collect contents, and push to server
+	fmt.Printf(`a client which listen files, collect contents, and push to logd server
 Usage:
-  logc <org> [address]
+  logc <org> [logd-address]
   default address: %s
   example: logc data-visual
-`, defaultAddr)
+`, defaultLogdAddr)
 }

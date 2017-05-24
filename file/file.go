@@ -5,50 +5,39 @@ import (
 	"os"
 
 	"github.com/lovego/xiaomei/utils"
+	"github.com/lovego/xiaomei/utils/fs"
 )
 
 type File struct {
 	org, name, path string
-	file, logFile   *os.File
+	logFile, file   *os.File
 	reader          *json.Decoder
 }
 
 func New(org, name, path string) *File {
-	f := &File{org: org, name: name, path: path}
-	if f.file = f.openFile(); f.file == nil {
+	if fs.NotExist(path) {
 		return nil
 	}
-	if f.logFile = f.openLog(); f.logFile == nil {
+	f := &File{org: org, name: name, path: path}
+	f.openLog()
+	var err error
+	if f.file, err = os.Open(f.path); err != nil {
+		f.log(`open ` + f.path + `: ` + err.Error())
 		return nil
 	}
 	f.reader = json.NewDecoder(f.file)
 	return f
 }
 
-func (f *File) openFile() *os.File {
-	file, err := os.Open(f.path)
-	if err != nil {
-		utils.Log(`open ` + f.path + `: ` + err.Error())
-		return nil
-	}
-	if offset := f.readOffset(); offset > 0 {
-		if _, err := file.Seek(offset, os.SEEK_SET); err != nil {
-			utils.Log(`seek ` + f.path + `: ` + err.Error())
-		}
-	}
-	return file
-}
-
-func (f *File) openLog() *os.File {
+func (f *File) openLog() {
 	dir := `logc/` + f.name
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+	var err error
+	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 		panic(err)
 	}
-	log, err := os.Open(dir + `/` + f.name + `.log`)
-	if err != nil {
+	if f.logFile, err = os.Open(dir + `/` + f.name + `.log`); err != nil {
 		panic(err)
 	}
-	return log
 }
 
 func (f *File) log(msg string) {

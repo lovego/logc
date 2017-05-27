@@ -2,4 +2,4 @@
 
 cd $(dirname $0)
 
-GOBIN=$(pwd)/release go install
+GOBIN=$(pwd)/release go install -v

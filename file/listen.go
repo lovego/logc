@@ -31,7 +31,7 @@ func (f *File) Listen() {
 		select {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				utils.Protect(f.collect)
+				utils.Protect(f.Collect)
 			}
 		case err := <-watcher.Errors:
 			f.log(`notify error: ` + err.Error())
@@ -39,7 +39,7 @@ func (f *File) Listen() {
 	}
 }
 
-func (f *File) collect() {
+func (f *File) Collect() {
 	f.seekFrontIfTruncated()
 	for rows := f.read(); len(rows) > 0; rows = f.read() {
 		f.push(rows)

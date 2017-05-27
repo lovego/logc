@@ -19,6 +19,7 @@ func main() {
 	if logdAddr == `` {
 		logdAddr = defaultLogdAddr
 	}
+	filepkg.LogdAddr = logdAddr
 	utils.Log(`logc starting. (logd: ` + logdAddr + `)`)
 	listenOrgFiles(org, logdAddr)
 	// select {}
@@ -28,11 +29,13 @@ func listenOrgFiles(org, logdAddr string) {
 	files := map[string]string{}
 	httputil.Http(http.MethodGet, `http://`+logdAddr+`/files?org=`+org, nil, nil, &files)
 	wg := sync.WaitGroup{}
+	fmt.Println(files)
 	for name, path := range files {
 		if file := filepkg.New(org, name, path); file != nil {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				file.Collect() // collect once before listen.
 				file.Listen()
 			}()
 		}

@@ -35,9 +35,7 @@ func (f *File) openLog() {
 	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 		panic(err)
 	}
-	if f.logFile, err = os.Open(dir + `/` + f.name + `.log`); err != nil {
-		panic(err)
-	}
+	f.logFile = fs.OpenAppend(dir + `/` + f.name + `.log`)
 }
 
 func (f *File) log(msg string) {

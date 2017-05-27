@@ -14,9 +14,6 @@ import (
 )
 
 func (f *File) Listen() {
-	utils.Log(`listen ` + f.path)
-	f.log(`listen ` + f.path)
-
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		utils.Log(`notify new: ` + err.Error())
@@ -34,7 +31,7 @@ func (f *File) Listen() {
 				utils.Protect(f.Collect)
 			}
 		case err := <-watcher.Errors:
-			f.log(`notify error: ` + err.Error())
+			f.Log(`notify error: ` + err.Error())
 		}
 	}
 }
@@ -44,7 +41,7 @@ func (f *File) Collect() {
 	for rows := f.read(); len(rows) > 0; rows = f.read() {
 		f.push(rows)
 		offsetStr := f.writeOffset()
-		f.log(strconv.Itoa(len(rows)) + `, ` + offsetStr)
+		f.Log(strconv.Itoa(len(rows)) + `, ` + offsetStr)
 	}
 }
 
@@ -55,7 +52,7 @@ func (f *File) read() []map[string]interface{} {
 		if err := f.reader.Decode(&row); err == nil {
 			rows = append(rows, row)
 		} else {
-			f.log(`decode error: ` + err.Error())
+			f.Log(`decode error: ` + err.Error())
 		}
 	}
 	return rows

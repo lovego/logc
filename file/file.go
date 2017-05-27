@@ -2,6 +2,7 @@ package file
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/lovego/xiaomei/utils"
@@ -9,22 +10,26 @@ import (
 )
 
 type File struct {
-	org, name, path string
-	logFile, file   *os.File
-	reader          *json.Decoder
+	org, name, path, offsetPath string
+	log, file                   *os.File
+	reader                      *json.Decoder
 }
 
 func New(org, name, path string) *File {
 	if fs.NotExist(path) {
 		return nil
 	}
-	f := &File{org: org, name: name, path: path}
+	f := &File{org: org, name: name, path: path,
+		offsetPath: `logc/` + name + `/` + name + `.offset`,
+	}
 	f.openLog()
 	var err error
 	if f.file, err = os.Open(f.path); err != nil {
-		f.log(`open ` + f.path + `: ` + err.Error())
+		f.Log(`open %s: %v`, f.path, err)
 		return nil
 	}
+	f.Log(`collect ` + path)
+	f.seekToSavedOffset()
 	f.reader = json.NewDecoder(f.file)
 	return f
 }
@@ -35,9 +40,9 @@ func (f *File) openLog() {
 	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 		panic(err)
 	}
-	f.logFile = fs.OpenAppend(dir + `/` + f.name + `.log`)
+	f.log = fs.OpenAppend(dir + `/` + f.name + `.log`)
 }
 
-func (f *File) log(msg string) {
-	utils.Logf(f.logFile, msg)
+func (f *File) Log(format string, args ...interface{}) {
+	utils.Logf(f.log, fmt.Sprintf(format, args...))
 }

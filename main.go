@@ -32,12 +32,12 @@ func listenOrgFiles(org, logdAddr string) {
 	for name, path := range files {
 		if file := filepkg.New(org, name, path); file != nil {
 			wg.Add(1)
-			go func() {
+			go func(path string) {
 				defer wg.Done()
 				utils.Log(`collect ` + path)
-				file.Collect() // collect once before listen.
+				file.Collect() // collect existing data before listen.
 				file.Listen()
-			}()
+			}(path)
 		}
 	}
 	wg.Wait()

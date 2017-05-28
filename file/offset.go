@@ -14,10 +14,12 @@ func (f *File) seekToSavedOffset() {
 	if offset := f.readOffset(); offset > 0 {
 		if size := f.size(); size > 0 && offset <= size {
 			if _, err := f.file.Seek(offset, os.SEEK_SET); err == nil {
-				f.Log(`seekToSavedOffset %s: %d`, f.path, offset)
+				f.Log(`seekToSavedOffset %s: offset(%d) size(%d)`, f.path, offset, size)
 			} else {
 				f.Log(`seekToSavedOffset %s error: %v`, f.path, err)
 			}
+		} else {
+			f.Log(`seekToSavedOffset %s: offset(%d) exceeds size(%d)`, f.path, offset, size)
 		}
 	}
 }

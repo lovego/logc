@@ -3,39 +3,35 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"sync"
 
-	filepkg "github.com/lovego/logc/file"
+	filespkg "github.com/lovego/logc/files"
+	logdpkg "github.com/lovego/logc/logd"
 	"github.com/lovego/xiaomei/utils"
-	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-const defaultLogdAddr = `192.168.202.12:30432`
-
 func main() {
-	org, logdAddr := getParams()
-	if logdAddr == `` {
-		logdAddr = defaultLogdAddr
+	logdAddr, mergeJson, orgName := getParams()
+	utils.Log(
+		`logc starting. (logd address: %s, merge json: %s, org name: %s)`,
+		logdAddr, mergeJson, orgName,
+	)
+	logd := logdpkg.New(logdAddr, mergeJson)
+	if logd == nil {
+		os.Exit(1)
 	}
-	filepkg.LogdAddr = logdAddr
-	utils.Log(`logc starting. (logd: ` + logdAddr + `)`)
-	listenOrgFiles(org, logdAddr)
-	// select {}
+	listenOrgFiles(logd, orgName)
 }
 
-func listenOrgFiles(org, logdAddr string) {
-	files := map[string]string{}
-	httputil.Http(http.MethodGet, `http://`+logdAddr+`/files?org=`+org, nil, nil, &files)
+func listenOrgFiles(logd *logdpkg.Logd, orgName string) {
+	filesMap := logd.FilesOf(orgName)
 	wg := sync.WaitGroup{}
-	for name, path := range files {
-		if file := filepkg.New(org, name, path); file != nil {
+	for name, path := range filesMap {
+		if file := filespkg.New(orgName, name, path, logd); file != nil {
 			wg.Add(1)
 			go func(path string) {
 				defer wg.Done()
-				utils.Log(`collect ` + path)
-				file.Collect() // collect existing data before listen.
 				file.Listen()
 			}(path)
 		}
@@ -43,29 +39,24 @@ func listenOrgFiles(org, logdAddr string) {
 	wg.Wait()
 }
 
-func getParams() (org, logdAddr string) {
-	flagset := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	flagset.Usage = usage
-	help := flagset.Bool(`help`, false, `print usage info.`)
-	flagset.Parse(os.Args[1:])
-	args := flagset.Args()
+func getParams() (logd, merge, org string) {
+	flag.StringVar(&logd, `logd`, `192.168.202.12:9000`, "the logd `address`")
+	flag.StringVar(&merge, `merge`, ``, "merge the `json` object into data lines")
+	help := flag.Bool(`help`, false, `print help message.`)
+	flag.CommandLine.Usage = usage
+	flag.Parse()
 
-	if len(args) == 0 || len(args) > 2 || *help {
+	if flag.NArg() != 1 || *help {
 		usage()
 		os.Exit(1)
 	}
-	org = args[0]
-	if len(args) > 1 {
-		logdAddr = args[1]
-	}
+	org = flag.Arg(0)
 	return
 }
 
 func usage() {
-	fmt.Printf(`a client which listen files, collect contents, and push to logd server
-Usage:
-  logc <org> [logd-address]
-  default address: %s
-  example: logc data-visual
-`, defaultLogdAddr)
+	fmt.Fprintf(os.Stderr, "%s listen files, and push content to logd server.\n\n"+
+		"Usage: %s [options] org-name\n"+
+		"Options:\n", os.Args[0], os.Args[0])
+	flag.PrintDefaults()
 }

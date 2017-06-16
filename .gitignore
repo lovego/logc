@@ -3,6 +3,5 @@
 *.pyc
 tmp
 /logc
-/log
 *.exe
 !.gitkeep

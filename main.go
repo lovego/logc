@@ -13,7 +13,7 @@ import (
 
 func main() {
 	logdAddr, mergeJson, orgName := getParams()
-	utils.Log(
+	utils.Logf(
 		`logc starting. (logd address: %s, merge json: %s, org name: %s)`,
 		logdAddr, mergeJson, orgName,
 	)
@@ -40,23 +40,23 @@ func listenOrgFiles(logd *logdpkg.Logd, orgName string) {
 }
 
 func getParams() (logd, merge, org string) {
-	flag.StringVar(&logd, `logd`, `192.168.202.12:9000`, "the logd `address`")
 	flag.StringVar(&merge, `merge`, ``, "merge the `json` object into data lines")
 	help := flag.Bool(`help`, false, `print help message.`)
 	flag.CommandLine.Usage = usage
 	flag.Parse()
 
-	if flag.NArg() != 1 || *help {
+	if flag.NArg() != 2 || *help {
 		usage()
 		os.Exit(1)
 	}
-	org = flag.Arg(0)
+	logd = flag.Arg(0)
+	org = flag.Arg(1)
 	return
 }
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "%s listen files, and push content to logd server.\n\n"+
-		"Usage: %s [options] org-name\n"+
+		"Usage: %s [options] logd-addr org-name\n"+
 		"Options:\n", os.Args[0], os.Args[0])
 	flag.PrintDefaults()
 }

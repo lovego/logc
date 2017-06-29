@@ -3,7 +3,6 @@ package logd
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -24,17 +23,15 @@ func (logd *Logd) Push(org, file string, rows []map[string]interface{}) {
 	if len(rows) == 0 {
 		return
 	}
-	pushUrl := logd.addr + `/file-data?` + logd.getPushQuery(org, file)
+	pushUrl := logd.addr + `/logs-data?` + logd.getPushQuery(org, file)
 	content, err := json.Marshal(rows)
 	if err != nil {
 		utils.Logf(`marshal rows error: %v`, err)
 		return
 	}
-	body := bytes.NewBuffer(content)
-
 	const max = time.Hour
 	for interval := time.Second; ; {
-		if push(pushUrl, body) {
+		if push(pushUrl, content) {
 			return
 		}
 		time.Sleep(interval)
@@ -57,10 +54,11 @@ func (logd *Logd) getPushQuery(org, file string) string {
 	return query.Encode()
 }
 
-func push(url string, body io.Reader) bool {
+func push(pushUrl string, content []byte) bool {
 	result := struct {
 		Code string `json:"code"`
 	}{}
-	httputil.Http(http.MethodPost, url, nil, body, &result)
+
+	httputil.Http(http.MethodPost, pushUrl, nil, bytes.NewBuffer(content), &result)
 	return result.Code == `ok`
 }

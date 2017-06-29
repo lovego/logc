@@ -2,7 +2,7 @@ package logd
 
 import (
 	"encoding/json"
-	"net/url"
+	"strings"
 
 	"github.com/lovego/xiaomei/utils"
 )
@@ -28,19 +28,10 @@ func parseAddress(addr string) string {
 		utils.Log(`logd address required.`)
 		return ``
 	}
-	u, err := url.Parse(addr)
-	if err != nil {
-		utils.Logf("invalid logd address(%v): %s", err, addr)
-		return ``
+	if !strings.HasPrefix(addr, `http://`) && !strings.HasPrefix(addr, `https://`) {
+		addr = `http://` + addr
 	}
-	if u.Host == `` {
-		utils.Logf("invalid logd address(%s): %s", `empty host`, addr)
-		return ``
-	}
-	if u.Scheme == `` {
-		u.Scheme = `http`
-	}
-	return (&url.URL{Scheme: u.Scheme, Host: u.Host}).String()
+	return addr
 }
 
 func parseMergeJson(merge string) string {

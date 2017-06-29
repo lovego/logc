@@ -26,7 +26,6 @@ func New(org, name, path string, logd *logd.Logd) *File {
 	if !f.openFiles() {
 		return nil
 	}
-	f.Log(`collect ` + path)
 	f.reader = json.NewDecoder(f.file)
 	return f
 }

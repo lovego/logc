@@ -6,9 +6,9 @@ import (
 )
 
 func (f *File) Listen() {
-	f.seekToSavedOffset()
 	utils.Log(`listen ` + f.path)
 	f.Log(`listen ` + f.path)
+	f.seekToSavedOffset()
 	f.collect() // collect existing data before listen.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

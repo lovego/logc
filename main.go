@@ -25,15 +25,15 @@ func main() {
 }
 
 func listenOrgFiles(logd *logdpkg.Logd, orgName string) {
-	filesMap := logd.FilesOf(orgName)
+	filesAry := logd.FilesOf(orgName)
 	wg := sync.WaitGroup{}
-	for name, path := range filesMap {
-		if file := filespkg.New(orgName, name, path, logd); file != nil {
+	for _, info := range filesAry {
+		if file := filespkg.New(orgName, info[`name`], info[`path`], logd); file != nil {
 			wg.Add(1)
-			go func(path string) {
+			go func() {
 				defer wg.Done()
 				file.Listen()
-			}(path)
+			}()
 		}
 	}
 	wg.Wait()

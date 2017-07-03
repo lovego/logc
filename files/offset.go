@@ -14,12 +14,12 @@ func (f *File) seekToSavedOffset() {
 	if offset := f.readOffset(); offset > 0 {
 		if size := f.size(); size > 0 && offset <= size {
 			if _, err := f.file.Seek(offset, os.SEEK_SET); err == nil {
-				f.Log(`seekToSavedOffset %s: offset(%d) size(%d)`, f.path, offset, size)
+				f.logger.Printf("seekToSavedOffset %s: offset(%d) size(%d)\n", f.path, offset, size)
 			} else {
-				f.Log(`seekToSavedOffset %s error: %v`, f.path, err)
+				f.logger.Printf("seekToSavedOffset %s error: %v\n", f.path, err)
 			}
 		} else {
-			f.Log(`seekToSavedOffset %s: offset(%d) exceeds size(%d)`, f.path, offset, size)
+			f.logger.Printf("seekToSavedOffset %s: offset(%d) exceeds size(%d)\n", f.path, offset, size)
 		}
 	}
 }
@@ -29,9 +29,9 @@ func (f *File) seekFrontIfTruncated() {
 	if offset := f.offset(); offset > 0 {
 		if size := f.size(); size > 0 && offset > size {
 			if _, err := f.file.Seek(0, os.SEEK_SET); err == nil {
-				f.Log(`seekFront (size: %d, offset: %d)`, size, offset)
+				f.logger.Printf("seekFront (size: %d, offset: %d)\n", size, offset)
 			} else {
-				f.Log(`seekFront (size: %d, offset: %d) error: %v`, size, offset, err)
+				f.logger.Printf("seekFront (size: %d, offset: %d) error: %v\n", size, offset, err)
 			}
 		}
 	}
@@ -46,7 +46,7 @@ func (f *File) writeOffset() string {
 	}
 
 	if err := ioutil.WriteFile(f.offsetPath, []byte(offsetStr), 0666); err != nil {
-		f.Log(`write offset error: %v`, err.Error())
+		f.logger.Printf("write offset error: %v\n", err.Error())
 	}
 	return offsetStr
 }
@@ -57,12 +57,12 @@ func (f *File) readOffset() int64 {
 	}
 	content, err := ioutil.ReadFile(f.offsetPath)
 	if err != nil {
-		f.Log(`read offset %s: %v`, f.offsetPath, err)
+		f.logger.Printf("read offset %s: %v\n", f.offsetPath, err)
 		return 0
 	}
 	offset, err := strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
 	if err != nil {
-		f.Log(`parse offset %s(%s): %s`, f.offsetPath, content, err)
+		f.logger.Printf("parse offset %s(%s): %s\n", f.offsetPath, content, err)
 		return 0
 	}
 	return offset
@@ -72,7 +72,7 @@ func (f *File) offset() int64 {
 	if offset, err := f.file.Seek(0, os.SEEK_CUR); err == nil {
 		return offset
 	} else {
-		f.Log(`get offset error: %v`, err)
+		f.logger.Printf("get offset error: %v\n", err)
 		return -1
 	}
 }
@@ -81,7 +81,7 @@ func (f *File) size() int64 {
 	if fi, err := f.file.Stat(); err == nil {
 		return fi.Size()
 	} else {
-		f.Log(`get size error: %v`, err)
+		f.logger.Printf("get size error: %v\n", err)
 		return -1
 	}
 }

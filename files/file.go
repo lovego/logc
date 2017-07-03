@@ -2,17 +2,18 @@ package files
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 
 	"github.com/lovego/logc/logd"
-	"github.com/lovego/xiaomei/utils"
 	"github.com/lovego/xiaomei/utils/fs"
 )
 
 type File struct {
 	org, name, path, offsetPath string
-	log, file                   *os.File
+	file                        *os.File
 	reader                      *json.Decoder
+	logger                      *log.Logger
 	logd                        *logd.Logd
 }
 
@@ -33,21 +34,19 @@ func New(org, name, path string, logd *logd.Logd) *File {
 func (f *File) openFiles() bool {
 	dir := `logc/` + f.name
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		utils.Logf(`mkdir %s error: %v`, dir, err)
+		log.Printf("mkdir %s error: %v\n", dir, err)
+		return false
+	}
+	if logFile, err := fs.OpenAppend(dir + `/` + f.name + `.log`); err == nil {
+		f.logger = log.New(logFile, ``, log.LstdFlags)
+	} else {
+		log.Printf("open %s: %v\n", f.path, err)
 		return false
 	}
 	var err error
-	if f.log, err = fs.OpenAppend(dir + `/` + f.name + `.log`); err != nil {
-		f.Log(`open %s: %v`, f.path, err)
-		return false
-	}
 	if f.file, err = os.Open(f.path); err != nil {
-		f.Log(`open %s: %v`, f.path, err)
+		f.logger.Printf("open %s: %v\n", f.path, err)
 		return false
 	}
 	return true
-}
-
-func (f *File) Log(format string, args ...interface{}) {
-	utils.FLogf(f.log, format, args...)
 }

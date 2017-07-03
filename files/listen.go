@@ -1,23 +1,25 @@
 package files
 
 import (
+	"log"
+
 	"github.com/lovego/xiaomei/utils"
 	"gopkg.in/fsnotify.v1"
 )
 
 func (f *File) Listen() {
-	utils.Log(`listen ` + f.path)
-	f.Log(`listen ` + f.path)
+	log.Println(`listen ` + f.path)
+	f.logger.Println(`listen ` + f.path)
 	f.seekToSavedOffset()
 	f.collect() // collect existing data before listen.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		utils.Logf("notify new error: %v", err)
+		log.Printf("notify new error: %v\n", err)
 	}
 	defer watcher.Close()
 
 	if err := watcher.Add(f.path); err != nil {
-		utils.Logf("notify add %s error: %v", f.path, err)
+		log.Printf("notify add %s error: %v\n", f.path, err)
 	}
 
 	for {
@@ -27,7 +29,7 @@ func (f *File) Listen() {
 				utils.Protect(f.collect)
 			}
 		case err := <-watcher.Errors:
-			f.Log(`notify error: %v`, err)
+			f.logger.Printf("notify error: %v\n", err)
 		}
 	}
 }
@@ -37,7 +39,7 @@ func (f *File) collect() {
 	for rows := f.read(); len(rows) > 0; rows = f.read() {
 		f.logd.Push(f.org, f.name, rows)
 		offsetStr := f.writeOffset()
-		f.Log("%d, %v", len(rows), offsetStr)
+		f.logger.Printf("%d, %s\n", len(rows), offsetStr)
 	}
 }
 
@@ -48,7 +50,7 @@ func (f *File) read() []map[string]interface{} {
 		if err := f.reader.Decode(&row); err == nil {
 			rows = append(rows, row)
 		} else {
-			f.Log(`decode error: ` + err.Error())
+			f.logger.Println(`decode error: ` + err.Error())
 		}
 	}
 	return rows

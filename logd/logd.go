@@ -2,29 +2,32 @@ package logd
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"time"
 
-	"github.com/lovego/xiaomei/utils"
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-func (logd *Logd) FilesOf(org string) (files []map[string]string) {
-	query := url.Values{}
-	query.Set(`org`, org)
-	filesUrl := logd.addr + `/files?` + query.Encode()
+func (logd *Logd) Create(org string, files []map[string]interface{}) error {
+	filesJson, err := json.Marshal(files)
+	if err != nil {
+		return err
+	}
+	form := url.Values{}
+	form.Set(`org`, org)
+	form.Set(`files`, string(filesJson))
 	resp := struct {
 		Code, Message string
-		Result        []map[string]string
 	}{}
-	if err := httputil.GetJson(filesUrl, nil, nil, &resp); err != nil {
-		log.Fatalf("get files error: %+v", err)
+	if err := httputil.PostJson(logd.addr+`/org-files`, nil, form.Encode(), &resp); err != nil {
+		return fmt.Errorf("create files error: %+v\n", err)
 	}
 	if resp.Code != `ok` {
-		log.Fatalf("get files error: %+v", resp)
+		return fmt.Errorf("create files failed: %+v\n", resp)
 	}
-	return resp.Result
+	return nil
 }
 
 func (logd *Logd) Push(org, file string, rows []map[string]interface{}) {
@@ -34,7 +37,7 @@ func (logd *Logd) Push(org, file string, rows []map[string]interface{}) {
 	pushUrl := logd.addr + `/logs-data?` + logd.getPushQuery(org, file)
 	content, err := json.Marshal(rows)
 	if err != nil {
-		utils.Logf(`marshal rows error: %v`, err)
+		log.Printf("marshal rows error: %v\n", err)
 		return
 	}
 	const max = time.Hour

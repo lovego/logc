@@ -2,47 +2,46 @@ package logd
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
-
-	"github.com/lovego/xiaomei/utils"
 )
 
 type Logd struct {
 	addr, mergeJson string
 }
 
-func New(addr, mergeJson string) *Logd {
-	if addr = parseAddress(addr); addr == `` {
-		return nil
+func New(addr, mergeJson string) (*Logd, error) {
+	var err error
+	if addr, err = parseAddress(addr); err != nil {
+		return nil, err
 	}
 	if mergeJson != `` {
-		if mergeJson = parseMergeJson(mergeJson); mergeJson == `` {
-			return nil
+		if mergeJson, err = parseMergeJson(mergeJson); err != nil {
+			return nil, err
 		}
 	}
-	return &Logd{addr, mergeJson}
+	return &Logd{addr, mergeJson}, nil
 }
 
-func parseAddress(addr string) string {
+func parseAddress(addr string) (string, error) {
 	if addr == `` {
-		utils.Log(`logd address required.`)
-		return ``
+		return ``, errors.New(`logd address required.`)
 	}
 	if !strings.HasPrefix(addr, `http://`) && !strings.HasPrefix(addr, `https://`) {
 		addr = `http://` + addr
 	}
-	return addr
+	return addr, nil
 }
 
-func parseMergeJson(merge string) string {
+func parseMergeJson(merge string) (string, error) {
 	mergeData := map[string]interface{}{}
 	var err error
 	if err = json.Unmarshal([]byte(merge), &mergeData); err == nil {
 		var mergeJson []byte
 		if mergeJson, err = json.Marshal(mergeData); err == nil {
-			return string(mergeJson)
+			return string(mergeJson), nil
 		}
 	}
-	utils.Logf("invalid merge json(%s): %s", err, merge)
-	return ``
+	return ``, fmt.Errorf("invalid merge json(%s): %s", err, merge)
 }

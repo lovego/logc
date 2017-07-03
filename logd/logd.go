@@ -1,7 +1,6 @@
 package logd
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
 	"net/url"
@@ -20,7 +19,7 @@ func (logd *Logd) FilesOf(org string) (files []map[string]string) {
 		Result        []map[string]string
 	}{}
 	if err := httputil.GetJson(filesUrl, nil, nil, &resp); err != nil {
-		log.Fatalf("get files error: %+v", resp)
+		log.Fatalf("get files error: %+v", err)
 	}
 	if resp.Code != `ok` {
 		log.Fatalf("get files error: %+v", resp)
@@ -69,7 +68,7 @@ func push(pushUrl string, content []byte) bool {
 		Message string `json:"message"`
 	}{}
 
-	err := httputil.PostJson(pushUrl, nil, bytes.NewBuffer(content), &result)
+	err := httputil.PostJson(pushUrl, nil, content, &result)
 	if err != nil {
 		log.Println("push data error: ", err)
 		return false

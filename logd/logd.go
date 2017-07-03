@@ -15,13 +15,13 @@ func (logd *Logd) Create(org string, files []map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
-	form := url.Values{}
-	form.Set(`org`, org)
-	form.Set(`files`, string(filesJson))
+	query := url.Values{}
+	query.Set(`org`, org)
+	createUrl := logd.addr + `/org-files?` + query.Encode()
 	resp := struct {
 		Code, Message string
 	}{}
-	if err := httputil.PostJson(logd.addr+`/org-files`, nil, form.Encode(), &resp); err != nil {
+	if err := httputil.PostJson(createUrl, nil, filesJson, &resp); err != nil {
 		return fmt.Errorf("create files error: %+v\n", err)
 	}
 	if resp.Code != `ok` {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 
 	filespkg "github.com/lovego/logc/files"
 	logdpkg "github.com/lovego/logc/logd"
+	"gopkg.in/yaml.v2"
 )
 
 type File struct {
@@ -22,7 +22,7 @@ type File struct {
 func main() {
 	logdAddr, mergeJson, orgName, filesAry := getParams()
 	log.Printf(
-		"logc starting. (logd address: %s, merge json: %s, org name: %s)\n",
+		"logc starting. (logd: %s, merge: %s, org: %s)\n",
 		logdAddr, mergeJson, orgName,
 	)
 	logd, err := logdpkg.New(logdAddr, mergeJson)
@@ -75,20 +75,23 @@ func getParams() (logd, merge, org string, files []File) {
 	return
 }
 
-func parseFiles(conf string) (files []File) {
-	content, err := ioutil.ReadFile(conf)
+func parseFiles(confFile string) []File {
+	content, err := ioutil.ReadFile(confFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := json.Unmarshal(content, &files); err != nil {
+	conf := struct {
+		Files []File
+	}{}
+	if err := yaml.Unmarshal(content, &conf); err != nil {
 		log.Fatal(err)
 	}
-	return
+	return conf.Files
 }
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "%s listen files, and push content to logd server.\n\n"+
-		"Usage: %s [options] logd-addr org-name logs-conf-file\n"+
+		"Usage: %s [options] logd-addr org-name conf-file\n"+
 		"Options:\n", os.Args[0], os.Args[0])
 	flag.PrintDefaults()
 }

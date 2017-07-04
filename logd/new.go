@@ -11,17 +11,18 @@ type Logd struct {
 	addr, mergeJson string
 }
 
-func New(addr, mergeJson string) (*Logd, error) {
+func New(addr string, mergeData map[string]interface{}) (*Logd, error) {
 	var err error
 	if addr, err = parseAddress(addr); err != nil {
 		return nil, err
 	}
-	if mergeJson != `` {
-		if mergeJson, err = parseMergeJson(mergeJson); err != nil {
-			return nil, err
+	var mergeJson []byte
+	if len(mergeData) > 0 {
+		if mergeJson, err = json.Marshal(mergeData); err != nil {
+			return nil, fmt.Errorf("marshal merge data: %v", err)
 		}
 	}
-	return &Logd{addr, mergeJson}, nil
+	return &Logd{addr, string(mergeJson)}, nil
 }
 
 func parseAddress(addr string) (string, error) {
@@ -32,16 +33,4 @@ func parseAddress(addr string) (string, error) {
 		addr = `http://` + addr
 	}
 	return addr, nil
-}
-
-func parseMergeJson(merge string) (string, error) {
-	mergeData := map[string]interface{}{}
-	var err error
-	if err = json.Unmarshal([]byte(merge), &mergeData); err == nil {
-		var mergeJson []byte
-		if mergeJson, err = json.Marshal(mergeData); err == nil {
-			return string(mergeJson), nil
-		}
-	}
-	return ``, fmt.Errorf("invalid merge json(%s): %s", err, merge)
 }

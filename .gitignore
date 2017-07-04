@@ -1,7 +1,9 @@
 .*.swp
 *.test
-*.pyc
 tmp
 /logc
+/release/logc
+/release/test/logc/
 *.exe
 !.gitkeep
+*.pyc

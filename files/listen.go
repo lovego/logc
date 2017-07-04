@@ -1,6 +1,7 @@
 package files
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/lovego/xiaomei/utils"
@@ -51,6 +52,9 @@ func (f *File) read() []map[string]interface{} {
 			rows = append(rows, row)
 		} else {
 			f.logger.Println(`decode error: ` + err.Error())
+			if _, ok := err.(*json.SyntaxError); ok {
+				return rows
+			}
 		}
 	}
 	return rows

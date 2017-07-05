@@ -1,6 +1,7 @@
 package files
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -30,6 +31,7 @@ func (f *File) seekFrontIfTruncated() {
 		if size := f.size(); size > 0 && offset > size {
 			if _, err := f.file.Seek(0, os.SEEK_SET); err == nil {
 				f.logger.Printf("seekFront (size: %d, offset: %d)\n", size, offset)
+				f.reader = json.NewDecoder(f.file)
 			} else {
 				f.logger.Printf("seekFront (size: %d, offset: %d) error: %v\n", size, offset, err)
 			}

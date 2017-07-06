@@ -22,7 +22,7 @@ func New(org, name, path string, logd *logd.Logd) *File {
 		return nil
 	}
 	f := &File{org: org, name: name, path: path, logd: logd,
-		offsetPath: `logc/` + name + `/` + name + `.offset`,
+		offsetPath: `logc/` + name + `.offset`,
 	}
 	if !f.openFiles() {
 		return nil
@@ -32,12 +32,11 @@ func New(org, name, path string, logd *logd.Logd) *File {
 }
 
 func (f *File) openFiles() bool {
-	dir := `logc/` + f.name
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		log.Printf("mkdir %s error: %v\n", dir, err)
+	if err := os.MkdirAll(`logc`, os.ModePerm); err != nil {
+		log.Printf("mkdir %s error: %v\n", `logc`, err)
 		return false
 	}
-	if logFile, err := fs.OpenAppend(dir + `/` + f.name + `.log`); err == nil {
+	if logFile, err := fs.OpenAppend(`logc/` + f.name + `.log`); err == nil {
 		f.logger = log.New(logFile, ``, log.LstdFlags)
 	} else {
 		log.Printf("open %s: %v\n", f.path, err)

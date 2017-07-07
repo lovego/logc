@@ -1,7 +1,9 @@
 package files
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 
 	"github.com/lovego/xiaomei/utils"
@@ -46,15 +48,23 @@ func (f *File) collect() {
 
 func (f *File) read() []map[string]interface{} {
 	rows := []map[string]interface{}{}
-	for i := 0; i < 1000 && f.reader.More(); i++ {
-		var row map[string]interface{}
-		if err := f.reader.Decode(&row); err == nil {
-			rows = append(rows, row)
-		} else {
-			f.logger.Println(`decode error: ` + err.Error())
-			if _, ok := err.(*json.SyntaxError); ok {
-				return rows
+	for i := 0; i < 1000; i++ {
+		line, err := f.reader.ReadBytes('\n')
+		if len(line) > 0 {
+			var row map[string]interface{}
+			if err := json.Unmarshal(line, &row); err == nil {
+				rows = append(rows, row)
+			} else {
+				if line = bytes.TrimSpace(line); len(line) > 0 {
+					f.logger.Printf("json error(%v): %s\n", err, line)
+				}
 			}
+		}
+		if err != nil {
+			if err != io.EOF {
+				f.logger.Println(`read error: ` + err.Error())
+			}
+			return rows
 		}
 	}
 	return rows

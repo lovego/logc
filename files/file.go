@@ -1,7 +1,7 @@
 package files
 
 import (
-	"encoding/json"
+	"bufio"
 	"log"
 	"os"
 
@@ -12,7 +12,7 @@ import (
 type File struct {
 	org, name, path, offsetPath string
 	file                        *os.File
-	reader                      *json.Decoder
+	reader                      *bufio.Reader
 	logger                      *log.Logger
 	logd                        *logd.Logd
 }
@@ -27,7 +27,7 @@ func New(org, name, path string, logd *logd.Logd) *File {
 	if !f.openFiles() {
 		return nil
 	}
-	f.reader = json.NewDecoder(f.file)
+	f.reader = bufio.NewReader(f.file)
 	return f
 }
 

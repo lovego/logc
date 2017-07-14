@@ -48,8 +48,10 @@ func (f *File) collect() {
 
 func (f *File) read() []map[string]interface{} {
 	rows := []map[string]interface{}{}
-	for i := 0; i < 1000; i++ {
-		line, err := f.reader.ReadBytes('\n')
+	var line []byte
+	for size := 0; size < 2*1024*1024; size += len(line) {
+		var err error
+		line, err = f.reader.ReadBytes('\n')
 		if len(line) > 0 {
 			var row map[string]interface{}
 			if err := json.Unmarshal(line, &row); err == nil {

@@ -12,12 +12,12 @@ import (
 
 type Config struct {
 	LogdAddr  string                 `yaml:"logdAddr"`
-	OrgName   string                 `yaml:"orgName"`
 	MergeData map[string]interface{} `yaml:"mergeData"`
 	Files     []File                 `yaml:"files"`
 }
 
 type File struct {
+	OrgName string                            `yaml:"orgName"`
 	Name    string                            `yaml:"name"`
 	Path    string                            `yaml:"path"`
 	Mapping map[string]map[string]interface{} `yaml:"mapping"`

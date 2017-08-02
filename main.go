@@ -11,33 +11,39 @@ import (
 func main() {
 	conf := getConfig()
 	log.Printf(
-		"logc starting. (logd: %s, org: %s, merge: %v)\n",
-		conf.LogdAddr, conf.OrgName, conf.MergeData,
+		"logc starting. (logd: %s, merge: %v)\n",
+		conf.LogdAddr, conf.MergeData,
 	)
 	logd, err := logdpkg.New(conf.LogdAddr, conf.MergeData)
 	if err != nil {
 		log.Fatal(err)
 	}
-	createOrgFiles(logd, conf.OrgName, conf.Files)
-	listenOrgFiles(logd, conf.OrgName, conf.Files)
+	createOrgFiles(logd, conf.Files)
+	listenOrgFiles(logd, conf.Files)
 }
 
-func createOrgFiles(logd *logdpkg.Logd, orgName string, filesAry []File) {
-	var filesMapping []map[string]interface{}
+func createOrgFiles(logd *logdpkg.Logd, filesAry []File) {
+	filesMappings := make(map[string][]map[string]interface{})
 	for _, file := range filesAry {
-		filesMapping = append(filesMapping, map[string]interface{}{
+		orgName := file.OrgName
+		if filesMappings[orgName] == nil {
+			filesMappings[orgName] = []map[string]interface{}{}
+		}
+		filesMappings[orgName] = append(filesMappings[orgName], map[string]interface{}{
 			`name`: file.Name, `mapping`: file.Mapping,
 		})
 	}
-	if err := logd.Create(orgName, filesMapping); err != nil {
-		log.Fatal(err)
+	for orgName, filesMapping := range filesMappings {
+		if err := logd.Create(orgName, filesMapping); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
-func listenOrgFiles(logd *logdpkg.Logd, orgName string, filesAry []File) {
+func listenOrgFiles(logd *logdpkg.Logd, filesAry []File) {
 	wg := sync.WaitGroup{}
 	for _, info := range filesAry {
-		if file := filespkg.New(orgName, info.Name, info.Path, logd); file != nil {
+		if file := filespkg.New(info.OrgName, info.Name, info.Path, logd); file != nil {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()

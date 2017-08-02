@@ -15,6 +15,7 @@ defaults: &defaults
   files:
     - { orgName: test-org, name: app-log, path: app.log, mapping: *mapping }
     - { orgName: test-org, name: app-err, path: app.err, mapping: *mapping }
+    - { orgName: recommend-consume, name: sku-status, path: kafka_sku_status.log, mapping: *mappingKafkaConsume }
   mapping: &mapping
     at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }
     duration: { type: float }
@@ -30,3 +31,6 @@ defaults: &defaults
     agent: { type: text }
     proto: { type: keyword }
     # session: sess
+  mappingKafkaConsume: &mappingKafkaConsume
+    at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }
+    data: { type: object }

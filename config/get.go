@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"flag"
@@ -10,20 +10,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
-	LogdAddr  string                 `yaml:"logdAddr"`
-	MergeData map[string]interface{} `yaml:"mergeData"`
-	Files     []File                 `yaml:"files"`
+func Get() Config {
+	conf := parse(filePath())
+	check(&conf)
+	return conf
 }
 
-type File struct {
-	OrgName string                            `yaml:"orgName"`
-	Name    string                            `yaml:"name"`
-	Path    string                            `yaml:"path"`
-	Mapping map[string]map[string]interface{} `yaml:"mapping"`
-}
-
-func getConfig() Config {
+func filePath() string {
 	help := flag.Bool(`help`, false, `print help message.`)
 	flag.CommandLine.Usage = usage
 	flag.Parse()
@@ -39,10 +32,10 @@ func getConfig() Config {
 	if notExist(configFile) {
 		log.Fatal(configFile + ` not exist.`)
 	}
-	return parseConfig(configFile)
+	return configFile
 }
 
-func parseConfig(configFile string) Config {
+func parse(configFile string) Config {
 	content, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Fatal(err)
@@ -65,7 +58,7 @@ func parseConfig(configFile string) Config {
 func usage() {
 	fmt.Fprintf(os.Stderr,
 		"Usage: %s [config-file] (default: logc.yml)\n"+
-			"logc listen files, and push content to logd server.\n", os.Args[0],
+			"logc watch files, collect content, and push to logd server.\n", os.Args[0],
 	)
 }
 

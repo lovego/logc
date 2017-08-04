@@ -4,8 +4,11 @@ import (
 	"log"
 	"sync"
 
-	filespkg "github.com/lovego/logc/files"
-	logdpkg "github.com/lovego/logc/logd"
+	"github.com/lovego/logc/collector"
+	"github.com/lovego/logc/config"
+	"github.com/lovego/logc/pusher"
+	"github.com/lovego/logc/source"
+	"github.com/lovego/logc/watch"
 )
 
 func main() {
@@ -14,42 +17,35 @@ func main() {
 		"logc starting. (logd: %s, merge: %v)\n",
 		conf.LogdAddr, conf.MergeData,
 	)
-	logd, err := logdpkg.New(conf.LogdAddr, conf.MergeData)
-	if err != nil {
-		log.Fatal(err)
+	pusher.CreateMappings(conf.LogdAddr, conf.Files)
+
+	collectors := make(map[string]watch.Collector)
+	for _, file := range conf.Files {
+		collectors[file.Path] = makeCollector(conf.logdAddr, conf.MergeJson, file)
 	}
-	createOrgFiles(logd, conf.Files)
-	listenOrgFiles(logd, conf.Files)
+	watch.Watch(collectors)
 }
 
-func createOrgFiles(logd *logdpkg.Logd, filesAry []File) {
-	filesMappings := make(map[string][]map[string]interface{})
-	for _, file := range filesAry {
-		orgName := file.OrgName
-		if filesMappings[orgName] == nil {
-			filesMappings[orgName] = []map[string]interface{}{}
-		}
-		filesMappings[orgName] = append(filesMappings[orgName], map[string]interface{}{
-			`name`: file.Name, `mapping`: file.Mapping,
-		})
-	}
-	for orgName, filesMapping := range filesMappings {
-		if err := logd.Create(orgName, filesMapping); err != nil {
-			log.Fatal(err)
-		}
-	}
+func getCollector(logdAddr, mergeJson, file *config.File) watch.Collector {
+	keyPath := filepath.Join(`logc`, file.Org, file.Name)
+	logger := getLogger(keyPath + `.log`)
+
+	return collector.New(
+		file.Path,
+		source.New(file.Path, keyPath+`.offset`, logger),
+		pusher.New(logdAddr, file.Org, file.Name, conf.MergeJson, logger),
+		logger,
+	)
 }
 
-func listenOrgFiles(logd *logdpkg.Logd, filesAry []File) {
-	wg := sync.WaitGroup{}
-	for _, info := range filesAry {
-		if file := filespkg.New(info.OrgName, info.Name, info.Path, logd); file != nil {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				file.Listen()
-			}()
-		}
+func getLogger(dir, name string) {
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		log.Fatal("mkdir %s error: %v\n", dir, err)
 	}
-	wg.Wait()
+	logPath := filepath.Join(dir, name+`.log`)
+	if logFile, err := fs.OpenAppend(logPath); err == nil {
+		c.logger = log.New(logFile, ``, log.LstdFlags)
+	} else {
+		log.Fatal("open %s: %v\n", logPath, err)
+	}
 }

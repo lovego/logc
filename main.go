@@ -2,17 +2,19 @@ package main
 
 import (
 	"log"
-	"sync"
+	"os"
+	"path/filepath"
 
 	"github.com/lovego/logc/collector"
 	"github.com/lovego/logc/config"
 	"github.com/lovego/logc/pusher"
 	"github.com/lovego/logc/source"
 	"github.com/lovego/logc/watch"
+	"github.com/lovego/xiaomei/utils/fs"
 )
 
 func main() {
-	conf := getConfig()
+	conf := config.Get()
 	log.Printf(
 		"logc starting. (logd: %s, merge: %v)\n",
 		conf.LogdAddr, conf.MergeData,
@@ -21,31 +23,32 @@ func main() {
 
 	collectors := make(map[string]watch.Collector)
 	for _, file := range conf.Files {
-		collectors[file.Path] = makeCollector(conf.logdAddr, conf.MergeJson, file)
+		collectors[file.Path] = getCollector(file, conf.LogdAddr, conf.MergeJson)
 	}
 	watch.Watch(collectors)
 }
 
-func getCollector(logdAddr, mergeJson, file *config.File) watch.Collector {
+func getCollector(file *config.File, logdAddr, mergeJson string) watch.Collector {
 	keyPath := filepath.Join(`logc`, file.Org, file.Name)
 	logger := getLogger(keyPath + `.log`)
 
 	return collector.New(
 		file.Path,
 		source.New(file.Path, keyPath+`.offset`, logger),
-		pusher.New(logdAddr, file.Org, file.Name, conf.MergeJson, logger),
+		pusher.New(logdAddr, file.Org, file.Name, mergeJson, logger),
 		logger,
 	)
 }
 
-func getLogger(dir, name string) {
+func getLogger(path string) *log.Logger {
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		log.Fatal("mkdir %s error: %v\n", dir, err)
 	}
-	logPath := filepath.Join(dir, name+`.log`)
-	if logFile, err := fs.OpenAppend(logPath); err == nil {
-		c.logger = log.New(logFile, ``, log.LstdFlags)
+	if logFile, err := fs.OpenAppend(path); err == nil {
+		return log.New(logFile, ``, log.LstdFlags)
 	} else {
-		log.Fatal("open %s: %v\n", logPath, err)
+		log.Fatal("open %s: %v\n", path, err)
+		return nil
 	}
 }

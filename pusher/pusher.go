@@ -1,4 +1,4 @@
-package logd
+package pusher
 
 import (
 	"encoding/json"
@@ -11,16 +11,17 @@ import (
 
 type Pusher struct {
 	pushUrl string
+	logger  *log.Logger
 }
 
-func New(addr, org, file, mergeJson string) *Pusher {
+func New(addr, org, file, mergeJson string, logger *log.Logger) *Pusher {
 	query := url.Values{}
 	query.Set(`org`, org)
 	query.Set(`file`, file)
 	if mergeJson != `` {
 		query.Set(`merge`, mergeJson)
 	}
-	return &Pusher{pushUrl: addr + `/logs-data?` + query.Encode()}
+	return &Pusher{pushUrl: addr + `/logs-data?` + query.Encode(), logger: logger}
 }
 
 func (p *Pusher) Push(rows []map[string]interface{}) {
@@ -29,7 +30,7 @@ func (p *Pusher) Push(rows []map[string]interface{}) {
 	}
 	content, err := json.Marshal(rows)
 	if err != nil {
-		log.Printf("marshal rows error: %v\n", err)
+		p.logger.Printf("marshal rows error: %v\n", err)
 		return
 	}
 	const max = time.Hour
@@ -55,11 +56,11 @@ func (p *Pusher) push(content []byte) bool {
 
 	err := httputil.PostJson(p.pushUrl, nil, content, &result)
 	if err != nil {
-		log.Println("push data error: ", err)
+		p.logger.Println("push data error: ", err)
 		return false
 	}
 	if result.Code != `ok` {
-		log.Printf("push data failed: %+v", result)
+		p.logger.Printf("push data failed: %+v", result)
 		return false
 	}
 	return true

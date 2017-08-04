@@ -1,4 +1,4 @@
-package logd
+package pusher
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-func CreateMappings(logdAddr string, filesAry []config.File) {
+func CreateMappings(logdAddr string, filesAry []*config.File) {
 	mappings := make(map[string][]map[string]interface{})
 	for _, file := range filesAry {
 		org := file.Org

@@ -8,8 +8,8 @@ import (
 )
 
 type Collector interface {
-	Notify()
-	Reopen()
+	NotifySourceWrite()
+	NotifySourceChange()
 }
 
 func Watch(collectors map[string]Collector) {
@@ -24,11 +24,11 @@ func Watch(collectors map[string]Collector) {
 		case event := <-watcher.Events:
 			collector := collectors[event.Name]
 			if collector != nil {
-				if event.Op&fsnotify.Create > 0 {
-					collector.Reopen()
+				if event.Op&fsnotify.Create == fsnotify.Create {
+					collector.NotifySourceChange()
 				}
-				if event.Op&fsnotify.Write > 0 {
-					collector.Notify()
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					collector.NotifySourceWrite()
 				}
 			}
 		case err := <-watcher.Errors:

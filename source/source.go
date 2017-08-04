@@ -63,15 +63,19 @@ func (s *Source) SaveOffset() string {
 	return offsetStr
 }
 
+func (s *Source) Opened() bool {
+	return s.file != nil
+}
+
 func (s *Source) Reopen() {
 	if s.file != nil {
 		s.file.Close()
 		s.file = nil
+		s.logger.Printf("reopen %s", s.path)
 	}
 	if err := os.Remove(s.offsetPath); err != nil && !os.IsNotExist(err) {
 		s.logger.Printf("remove offsetFile %s error: %v\n", s.offsetPath, err.Error())
 	}
-	s.logger.Printf("reopen %s", s.path)
 }
 
 func (s *Source) parseRow(line []byte) map[string]interface{} {

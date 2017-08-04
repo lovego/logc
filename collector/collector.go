@@ -7,9 +7,10 @@ import (
 	"github.com/lovego/xiaomei/utils/fs"
 )
 
-type sourceIfc interface {
+type ifcEvent interface {
 	Read() (rows []map[string]interface{}, drain bool)
 	SaveOffset() string
+	Opened() bool
 	Reopen()
 }
 
@@ -18,15 +19,19 @@ type pusherIfc interface {
 }
 
 type Collector struct {
-	source       sourceIfc
-	pusher       pusherIfc
-	logger       *log.Logger
-	sourceWrite  chan struct{}
-	sourceChange chan struct{}
+	source      ifcEvent
+	pusher      pusherIfc
+	logger      *log.Logger
+	writeEvent  chan struct{}
+	createEvent chan struct{}
 }
 
-func New(path string, source sourceIfc, pusher pusherIfc, logger *log.Logger) *Collector {
-	c := &Collector{source: source, pusher: pusher, logger: logger}
+func New(path string, source ifcEvent, pusher pusherIfc, logger *log.Logger) *Collector {
+	c := &Collector{
+		source: source, pusher: pusher, logger: logger,
+		writeEvent:  make(chan struct{}, 1),
+		createEvent: make(chan struct{}, 1),
+	}
 	log.Println(`listen ` + path)
 
 	go c.loop(path)
@@ -40,10 +45,12 @@ func (c *Collector) loop(path string) {
 	}
 	for {
 		select {
-		case <-c.sourceChange:
-			utils.Protect(c.collect) // collect remaining data.
+		case <-c.createEvent:
+			if c.source.Opened() {
+				utils.Protect(c.collect)
+			}
 			c.source.Reopen()
-		case <-c.sourceWrite:
+		case <-c.writeEvent:
 			utils.Protect(c.collect)
 		}
 	}
@@ -62,16 +69,16 @@ func (c *Collector) collect() {
 	}
 }
 
-func (c *Collector) NotifySourceWrite() {
+func (c *Collector) NotifyWrite() {
 	select {
-	case c.sourceWrite <- struct{}{}:
+	case c.writeEvent <- struct{}{}:
 	default:
 	}
 }
 
-func (c *Collector) NotifySourceChange() {
+func (c *Collector) NotifyCreate() {
 	select {
-	case c.sourceChange <- struct{}{}:
+	case c.createEvent <- struct{}{}:
 	default:
 	}
 }

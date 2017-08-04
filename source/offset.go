@@ -12,7 +12,7 @@ import (
 // 把文件seek到上次保存的位置
 func (s *Source) seekToSavedOffset() {
 	if offset := s.readOffset(); offset > 0 {
-		if size := s.size(); size > 0 && offset <= size {
+		if size := s.size(); size >= 0 && offset <= size {
 			if _, err := s.file.Seek(offset, os.SEEK_SET); err == nil {
 				s.logger.Printf("seekToSavedOffset %s: offset(%d) size(%d)\n", s.path, offset, size)
 			} else {
@@ -27,7 +27,7 @@ func (s *Source) seekToSavedOffset() {
 // 如果文件被截短，把文件seek到开头
 func (s *Source) seekFrontIfTruncated() {
 	if offset := s.offset(); offset > 0 {
-		if size := s.size(); size > 0 && offset > size {
+		if size := s.size(); size >= 0 && offset > size {
 			if _, err := s.file.Seek(0, os.SEEK_SET); err == nil {
 				s.logger.Printf("seekFront (size: %d, offset: %d)\n", size, offset)
 				s.reader.Reset(s.file)

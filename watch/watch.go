@@ -8,8 +8,8 @@ import (
 )
 
 type Collector interface {
-	NotifySourceWrite()
-	NotifySourceChange()
+	NotifyWrite()
+	NotifyCreate()
 }
 
 func Watch(collectors map[string]Collector) {
@@ -24,11 +24,12 @@ func Watch(collectors map[string]Collector) {
 		case event := <-watcher.Events:
 			collector := collectors[event.Name]
 			if collector != nil {
+				log.Println(event)
 				if event.Op&fsnotify.Create == fsnotify.Create {
-					collector.NotifySourceChange()
+					collector.NotifyCreate()
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					collector.NotifySourceWrite()
+					collector.NotifyWrite()
 				}
 			}
 		case err := <-watcher.Errors:
@@ -69,12 +70,8 @@ func getWatchDirs(collectors map[string]Collector) (dirs []string) {
 		dir := filepath.Dir(path)
 		m[dir] = true
 		if dir == `.` {
-			if relPath, err := filepath.Rel(dir, path); err != nil {
-				log.Panic(err)
-			} else if path != relPath {
-				delete(collectors, path)
-				collectors[relPath] = collector
-			}
+			delete(collectors, path)
+			collectors[`./`+path] = collector
 		}
 	}
 	for dir := range m {

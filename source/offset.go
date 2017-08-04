@@ -47,9 +47,13 @@ func (s *Source) readOffset() int64 {
 		s.logger.Printf("read offset %s: %v\n", s.offsetPath, err)
 		return 0
 	}
-	offset, err := strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
+	contentStr := strings.TrimSpace(string(content))
+	if len(contentStr) == 0 {
+		return 0
+	}
+	offset, err := strconv.ParseInt(contentStr, 10, 64)
 	if err != nil {
-		s.logger.Printf("parse offset %s(%s): %s\n", s.offsetPath, content, err)
+		s.logger.Printf("parse offset %s(%s): %s\n", s.offsetPath, contentStr, err)
 		return 0
 	}
 	return offset

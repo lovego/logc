@@ -14,7 +14,7 @@ func main() {
 	defer watcher.Close()
 
 	for _, path := range []string{
-		`/home/ubuntu/go/src/github.com/lovego/logc/watch`, `..`, `.`,
+		`./watch-test.go`,
 	} {
 		if err := watcher.Add(path); err != nil {
 			log.Printf("watcher.Add %s error: %v\n", path, err)

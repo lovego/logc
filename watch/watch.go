@@ -3,6 +3,7 @@ package watch
 import (
 	"log"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/fsnotify.v1"
 )
@@ -13,66 +14,62 @@ type Collector interface {
 }
 
 func Watch(collectors map[string]Collector) {
-	watcher := initWatcher(collectors)
-	if watcher == nil {
-		return
-	}
-	defer watcher.Close()
+	files := getFiles(collectors)
+	filesWatcher := getWatcher(files)
+	dirsWatcher := getWatcher(getDirs(files))
+
+	defer filesWatcher.Close()
+	defer dirsWatcher.Close()
 
 	for {
 		select {
-		case event := <-watcher.Events:
-			collector := collectors[event.Name]
-			if collector != nil {
-				log.Println(event)
-				if event.Op&fsnotify.Create == fsnotify.Create {
-					collector.NotifyCreate()
-				}
-				if event.Op&fsnotify.Write == fsnotify.Write {
+		case err := <-filesWatcher.Errors:
+			log.Printf("files watcher error: %v\n", err)
+		case err := <-dirsWatcher.Errors:
+			log.Printf("dirs watcher error: %v\n", err)
+		case event := <-filesWatcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				if collector := collectors[event.Name]; collector != nil {
+					log.Println(event)
 					collector.NotifyWrite()
 				}
 			}
-		case err := <-watcher.Errors:
-			log.Printf("notify watcher error: %v\n", err)
+		case event := <-dirsWatcher.Events:
+			if event.Op&fsnotify.Create == fsnotify.Create {
+				if collector := collectors[strings.TrimPrefix(event.Name, `./`)]; collector != nil {
+					log.Println(event)
+					collector.NotifyCreate()
+				}
+			}
 		}
 	}
 }
 
-func initWatcher(collectors map[string]Collector) *fsnotify.Watcher {
-	dirs := getWatchDirs(collectors)
-	if len(dirs) == 0 {
-		return nil
-	}
+func getWatcher(paths []string) *fsnotify.Watcher {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Printf("fsnotify.NewWatcher error: %v\n", err)
+		log.Fatal("fsnotify.NewWatcher error: %v\n", err)
 	}
 
-	hasSuccess := false
-	for _, dir := range dirs {
-		if err := watcher.Add(dir); err != nil {
-			log.Printf("watcher.Add %s error: %v\n", dir, err)
-		} else {
-			hasSuccess = true
+	for _, path := range paths {
+		if err := watcher.Add(path); err != nil {
+			log.Printf("watcher.Add %s error: %v\n", path, err)
 		}
 	}
-	if hasSuccess {
-		return watcher
-	} else {
-		watcher.Close()
-		return nil
-	}
+	return watcher
 }
 
-func getWatchDirs(collectors map[string]Collector) (dirs []string) {
+func getFiles(collectors map[string]Collector) (files []string) {
+	for file := range collectors {
+		files = append(files, file)
+	}
+	return
+}
+
+func getDirs(files []string) (dirs []string) {
 	m := make(map[string]bool)
-	for path, collector := range collectors {
-		dir := filepath.Dir(path)
-		m[dir] = true
-		if dir == `.` {
-			delete(collectors, path)
-			collectors[`./`+path] = collector
-		}
+	for _, path := range files {
+		m[filepath.Dir(path)] = true
 	}
 	for dir := range m {
 		dirs = append(dirs, dir)

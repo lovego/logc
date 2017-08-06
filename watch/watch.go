@@ -15,30 +15,30 @@ type Collector interface {
 
 func Watch(collectors map[string]Collector) {
 	files := getFiles(collectors)
-	filesWatcher := getWatcher(files)
 	dirsWatcher := getWatcher(getDirs(files))
+	filesWatcher := getWatcher(files)
 
-	defer filesWatcher.Close()
 	defer dirsWatcher.Close()
+	defer filesWatcher.Close()
 
 	for {
 		select {
-		case err := <-filesWatcher.Errors:
-			log.Printf("files watcher error: %v\n", err)
 		case err := <-dirsWatcher.Errors:
 			log.Printf("dirs watcher error: %v\n", err)
-		case event := <-filesWatcher.Events:
-			if event.Op&fsnotify.Write == fsnotify.Write {
-				if collector := collectors[event.Name]; collector != nil {
-					log.Println(event)
-					collector.NotifyWrite()
-				}
-			}
+		case err := <-filesWatcher.Errors:
+			log.Printf("files watcher error: %v\n", err)
 		case event := <-dirsWatcher.Events:
 			if event.Op&fsnotify.Create == fsnotify.Create {
 				if collector := collectors[strings.TrimPrefix(event.Name, `./`)]; collector != nil {
 					log.Println(event)
 					collector.NotifyCreate()
+				}
+			}
+		case event := <-filesWatcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				if collector := collectors[event.Name]; collector != nil {
+					log.Println(event)
+					collector.NotifyWrite()
 				}
 			}
 		}
@@ -52,7 +52,9 @@ func getWatcher(paths []string) *fsnotify.Watcher {
 	}
 
 	for _, path := range paths {
-		if err := watcher.Add(path); err != nil {
+		if err := watcher.Add(path); err == nil {
+			log.Printf("watch %s ", path)
+		} else {
 			log.Printf("watcher.Add %s error: %v\n", path, err)
 		}
 	}

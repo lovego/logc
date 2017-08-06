@@ -32,14 +32,13 @@ func New(path string, source ifcEvent, pusher pusherIfc, logger *log.Logger) *Co
 		writeEvent:  make(chan struct{}, 1),
 		createEvent: make(chan struct{}, 1),
 	}
-	log.Println(`listen ` + path)
 
+	c.logger.Println(`listen ` + path)
 	go c.loop(path)
 	return c
 }
 
 func (c *Collector) loop(path string) {
-	c.logger.Println(`listen ` + path)
 	if fs.Exist(path) {
 		c.collect() // collect existing data.
 	}

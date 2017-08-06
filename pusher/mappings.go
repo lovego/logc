@@ -37,9 +37,9 @@ func createMappings(logdAddr, org string, files []map[string]interface{}) {
 		Code, Message string
 	}{}
 	if err := httputil.PostJson(createUrl, nil, filesJson, &resp); err != nil {
-		log.Fatal("create files error: %+v\n", err)
+		log.Fatalf("create files error: %+v\n", err)
 	}
 	if resp.Code != `ok` {
-		log.Fatal("create files failed: %+v\n", resp)
+		log.Fatalf("create files failed: %+v\n", resp)
 	}
 }

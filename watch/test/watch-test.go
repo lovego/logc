@@ -13,9 +13,7 @@ func main() {
 	}
 	defer watcher.Close()
 
-	for _, path := range []string{
-		`./watch-test.go`,
-	} {
+	for _, path := range []string{`./test.txt`} {
 		if err := watcher.Add(path); err != nil {
 			log.Printf("watcher.Add %s error: %v\n", path, err)
 		}

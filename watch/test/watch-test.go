@@ -13,7 +13,7 @@ func main() {
 	}
 	defer watcher.Close()
 
-	for _, path := range []string{`./test.txt`} {
+	for _, path := range []string{`.`} {
 		if err := watcher.Add(path); err != nil {
 			log.Printf("watcher.Add %s error: %v\n", path, err)
 		}

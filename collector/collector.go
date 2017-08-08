@@ -2,12 +2,13 @@ package collector
 
 import (
 	"log"
+	"os"
 
 	"github.com/lovego/xiaomei/utils"
 	"github.com/lovego/xiaomei/utils/fs"
 )
 
-type ifcEvent interface {
+type sourceIfc interface {
 	Read() (rows []map[string]interface{}, drain bool)
 	SaveOffset() string
 	Opened() bool
@@ -19,14 +20,15 @@ type pusherIfc interface {
 }
 
 type Collector struct {
-	source      ifcEvent
-	pusher      pusherIfc
-	logger      *log.Logger
-	writeEvent  chan struct{}
-	createEvent chan struct{}
+	source       sourceIfc
+	pusher       pusherIfc
+	logger       *log.Logger
+	writeEvent   chan struct{}
+	renameEvent  chan struct{}
+	destroyEvent chan struct{}
 }
 
-func New(path string, source ifcEvent, pusher pusherIfc, logger *log.Logger) *Collector {
+func New(path string, source sourceIfc, pusher pusherIfc, logger *log.Logger) *Collector {
 	c := &Collector{
 		source: source, pusher: pusher, logger: logger,
 		writeEvent:  make(chan struct{}, 1),
@@ -44,13 +46,12 @@ func (c *Collector) loop(path string) {
 	}
 	for {
 		select {
-		case <-c.createEvent:
-			if c.source.Opened() {
-				utils.Protect(c.collect)
-			}
-			c.source.Reopen()
+		case <-c.renameEvent:
+			utils.Protect(c.rename)
 		case <-c.writeEvent:
 			utils.Protect(c.collect)
+		case <-c.destroyEvent:
+			utils.Protect(c.destroy)
 		}
 	}
 }
@@ -80,4 +81,11 @@ func (c *Collector) NotifyCreate() {
 	case c.createEvent <- struct{}{}:
 	default:
 	}
+}
+
+func (c *Collector) OpenedSameFile(os.FileInfo) bool {
+	return false
+}
+
+func (c *Collector) Destroy() {
 }

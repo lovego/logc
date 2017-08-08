@@ -1,23 +1,21 @@
-/* Package watch 监听文件变动，并通知相应的日志收集器。只关心两种变动事件：
+/* Package watch 监听文件变动，并通知相应的日志收集器。
+如果在收集日志过程中，文件被移动，因为fsnotify是基于文件名来识别文件的，就监听不到该文件的写变动。
+既然fsnotify做不到文件移动后继续监听， 所以我们就只监听文件所在的目录，来获取文件的写入和创建事件。
+在我们检测到文件移动后，我们将收集器映射到新的文件名。
+我们只关心两种变动事件：
 1. Write
 	通知收集器文件有写入，应该进行日志收集。
 2. Create
-	通知收集器文件被创建，可能是新建或移动后重新创建。应该重新打开该文件。
-
-日志旋转（先移动再重新创建）
-如果在收集日志过程中，文件被移动，因为fsnotify是基于文件名来识别文件的，就监听不到该文件的写变动。
-既然做不到文件移动后继续收集， 所以我们就只监听文件所在的目录，来获取文件的写入和创建事件。
-在收到创建事件时，收集器如果有当前已经打开的文件，会将当前打开的文件的所有内容收集完，
-再重新打开文件以保证在日志旋转过程中没有内容丢失。
-
-TODO
-文件移动后，通知收集器改用轮询方式继续收集。文件重新创建后，切换回事件通知方式收集。
+	a. 文件被重命名：对比当前文件和所有已经打开的文件，如果是同一文件，更新收集器及收集器Map。
+	b. 目标文件被创建: 应该通知收集器重新打开该文件。
+3. Remove
+  文件被删除，销毁收集器
 */
 package watch
 
 import (
 	"log"
-	"path/filepath"
+	"os"
 	"strings"
 
 	"gopkg.in/fsnotify.v1"
@@ -25,13 +23,14 @@ import (
 
 type Collector interface {
 	NotifyWrite()
-	NotifyCreate()
+	NotifyRename(newPath string)
+	OpenedSameFile(os.FileInfo) bool
+	Destroy()
 }
 
-func Watch(collectors map[string]Collector) {
-	files := getFiles(collectors)
-	dirsWatcher := getWatcher(getDirs(files))
-
+func Watch(collectorMakers map[string]func() Collector) {
+	collectors := getCollectors(collectorMakers)
+	dirsWatcher := getWatcher(getDirs(collectors))
 	defer dirsWatcher.Close()
 
 	for {
@@ -40,48 +39,57 @@ func Watch(collectors map[string]Collector) {
 			log.Printf("dirs watcher error: %v\n", err)
 		case event := <-dirsWatcher.Events:
 			log.Println(event)
-			if collector := collectors[strings.TrimPrefix(event.Name, `./`)]; collector != nil {
-				if event.Op&fsnotify.Write == fsnotify.Write {
+
+			path := strings.TrimPrefix(event.Name, `./`)
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				if collector := collectors[path]; collector != nil {
 					collector.NotifyWrite()
 				}
-				if event.Op&fsnotify.Create == fsnotify.Create {
-					collector.NotifyCreate()
+			} else if event.Op&fsnotify.Create == fsnotify.Create {
+				if !handleRename(path, collectors) {
+					handleCreate(path, collectors, collectorMakers)
 				}
+			} else if event.Op&fsnotify.Remove == fsnotify.Remove {
+				handleRemove(path, collectors)
 			}
 		}
 	}
 }
 
-func getWatcher(paths []string) *fsnotify.Watcher {
-	watcher, err := fsnotify.NewWatcher()
+func handleRename(path string, collectors map[string]Collector) bool {
+	fi, err := os.Stat(path)
 	if err != nil {
-		log.Fatal("fsnotify.NewWatcher error: %v\n", err)
+		log.Printf("stat %s error: %v", path, err)
+		return true
 	}
-
-	for _, path := range paths {
-		if err := watcher.Add(path); err == nil {
-			log.Printf("watch %s ", path)
-		} else {
-			log.Printf("watcher.Add %s error: %v\n", path, err)
+	for oldPath, collector := range collectors {
+		if collector.OpenedSameFile(fi) {
+			if oldPath != path {
+				if coll := collectors[path]; coll != nil {
+					coll.Destroy()
+				}
+				collector.NotifyRename(path)
+				delete(collectors, oldPath)
+				collectors[path] = collector
+			}
+			return true
 		}
 	}
-	return watcher
+	return false
 }
 
-func getFiles(collectors map[string]Collector) (files []string) {
-	for file := range collectors {
-		files = append(files, file)
+func handleCreate(
+	path string, collectors map[string]Collector, collectorMakers map[string]func() Collector,
+) {
+	handleRemove(path, collectors)
+	if maker := collectorMakers[path]; maker != nil {
+		collectors[path] = maker()
 	}
-	return
 }
 
-func getDirs(files []string) (dirs []string) {
-	m := make(map[string]bool)
-	for _, path := range files {
-		m[filepath.Dir(path)] = true
+func handleRemove(path string, collectors map[string]Collector) {
+	if collector := collectors[path]; collector != nil {
+		collector.Destroy()
+		delete(collectors, path)
 	}
-	for dir := range m {
-		dirs = append(dirs, dir)
-	}
-	return
 }

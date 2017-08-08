@@ -21,23 +21,25 @@ func main() {
 	)
 	pusher.CreateMappings(conf.LogdAddr, conf.Files)
 
-	collectors := make(map[string]watch.Collector)
+	collectors := make(map[string]func() watch.Collector)
 	for _, file := range conf.Files {
-		collectors[file.Path] = getCollector(file, conf.LogdAddr, conf.MergeJson)
+		collectors[file.Path] = getCollectorMaker(file, conf.LogdAddr, conf.MergeJson)
 	}
 	watch.Watch(collectors)
 }
 
-func getCollector(file *config.File, logdAddr, mergeJson string) watch.Collector {
+func getCollectorMaker(file *config.File, logdAddr, mergeJson string) func() watch.Collector {
 	keyPath := filepath.Join(`logc`, file.Org, file.Name)
 	logger := getLogger(keyPath + `.log`)
 
-	return collector.New(
-		file.Path,
-		source.New(file.Path, keyPath+`.offset`, logger),
-		pusher.New(logdAddr, file.Org, file.Name, mergeJson, logger),
-		logger,
-	)
+	return func() watch.Collector {
+		return collector.New(
+			file.Path,
+			source.New(file.Path, keyPath+`.offset`, logger),
+			pusher.New(logdAddr, file.Org, file.Name, mergeJson, logger),
+			logger,
+		)
+	}
 }
 
 func getLogger(path string) *log.Logger {

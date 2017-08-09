@@ -39,7 +39,7 @@ func (l *Logger) Rename(newPath string) {
 	}
 }
 
-func (l *Logger) Destroy() {
+func (l *Logger) Remove() {
 	if err := l.file.Close(); err != nil {
 		l.Printf("logger: close %s error: %v", l.path, err)
 	}

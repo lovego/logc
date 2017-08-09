@@ -2,8 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/lovego/logc/collector"
 	"github.com/lovego/logc/config"
@@ -29,19 +27,18 @@ func main() {
 }
 
 func getCollectorMaker(file *config.File, logdAddr, mergeJson string) func() watch.Collector {
-
 	return func() watch.Collector {
-		theLogger := getLogger(file.Path)
+		theLogger := logger.New(file.Path)
 		if theLogger == nil {
 			return nil
 		}
-		theReader := reader.New(file.Path, logger)
+		theReader := reader.New(file.Path, theLogger.Get())
 		if theReader == nil {
 			return nil
 		}
 		return collector.New(
 			file.Path, theReader, theLogger,
-			pusher.New(logdAddr, file.Org, file.Name, mergeJson, logger),
+			pusher.New(logdAddr, file.Org, file.Name, mergeJson, theLogger.Get()),
 		)
 	}
 }

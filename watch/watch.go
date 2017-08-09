@@ -24,8 +24,8 @@ import (
 type Collector interface {
 	NotifyWrite()
 	NotifyRename(newPath string)
+	NotifyRemove()
 	OpenedSameFile(os.FileInfo) bool
-	Destroy()
 }
 
 func Watch(collectorMakers map[string]func() Collector) {
@@ -59,15 +59,13 @@ func Watch(collectorMakers map[string]func() Collector) {
 func handleRename(path string, collectors map[string]Collector) bool {
 	fi, err := os.Stat(path)
 	if err != nil {
-		log.Printf("stat %s error: %v", path, err)
+		log.Printf("watch: stat %s error: %v", path, err)
 		return true
 	}
 	for oldPath, collector := range collectors {
 		if collector.OpenedSameFile(fi) {
 			if oldPath != path {
-				if coll := collectors[path]; coll != nil {
-					coll.Destroy()
-				}
+				handleRemove(path, collectors)
 				collector.NotifyRename(path)
 				delete(collectors, oldPath)
 				collectors[path] = collector
@@ -89,7 +87,7 @@ func handleCreate(
 
 func handleRemove(path string, collectors map[string]Collector) {
 	if collector := collectors[path]; collector != nil {
-		collector.Destroy()
+		collector.NotifyRemove()
 		delete(collectors, path)
 	}
 }

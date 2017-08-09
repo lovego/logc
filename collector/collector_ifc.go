@@ -11,20 +11,20 @@ func (c *Collector) NotifyWrite() {
 	}
 }
 
-func (c *Collector) NotifyRename() {
+func (c *Collector) NotifyRename(newPath string) {
 	select {
-	case c.renameEvent <- struct{}{}:
+	case c.renameEvent <- newPath:
 	default:
 	}
 }
 
-func (c *Collector) NotifyDestroy() {
+func (c *Collector) NotifyRemove() {
 	select {
-	case c.destroyEvent <- struct{}{}:
+	case c.removeEvent <- struct{}{}:
 	default:
 	}
 }
 
-func (c *Collector) OpenedSameFile(os.FileInfo) bool {
-	return false
+func (c *Collector) OpenedSameFile(fi os.FileInfo) bool {
+	return c.reader.SameFile(fi)
 }

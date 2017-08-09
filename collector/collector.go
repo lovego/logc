@@ -1,25 +1,21 @@
 package collector
 
 import (
-	"log"
 	"os"
-
-	"github.com/lovego/xiaomei/utils"
-	"github.com/lovego/xiaomei/utils/fs"
 )
 
-type sourceIfc interface {
+type readerIfc interface {
 	Read() (rows []map[string]interface{}, drain bool)
 	SaveOffset() string
-	RenameOffset(string)
-	Destroy()
+	SameFile(os.FileInfo) bool
+	Rename(string)
+	Remove()
 }
 
 type loggerIfc interface {
 	Printf(format string, v ...interface{})
-	Println(v ...interface{})
 	Rename(string)
-	Destroy()
+	Remove()
 }
 
 type pusherIfc interface {
@@ -27,47 +23,50 @@ type pusherIfc interface {
 }
 
 type Collector struct {
-	source       sourceIfc
-	logger       loggerIfc
-	pusher       pusherIfc
-	writeEvent   chan struct{}
-	renameEvent  chan struct{}
-	destroyEvent chan struct{}
+	path        string
+	reader      readerIfc
+	logger      loggerIfc
+	pusher      pusherIfc
+	writeEvent  chan struct{}
+	renameEvent chan string
+	removeEvent chan struct{}
 }
 
-func New(path string, source sourceIfc, logger loggerIfc, pusher pusherIfc) *Collector {
+func New(path string, reader readerIfc, logger loggerIfc, pusher pusherIfc) *Collector {
 	c := &Collector{
-		source: source, pusher: pusher, logger: logger,
-		writeEvent:   make(chan struct{}, 1),
-		renameEvent:  make(chan struct{}, 1),
-		destroyEvent: make(chan struct{}, 1),
+		path: path, reader: reader, pusher: pusher, logger: logger,
+		writeEvent:  make(chan struct{}, 1),
+		renameEvent: make(chan string, 1),
+		removeEvent: make(chan struct{}, 1),
 	}
 
-	c.logger.Println(`listen ` + path)
-	go c.loop(path)
+	go c.loop()
 	return c
 }
 
-func (c *Collector) loop(path string) {
+func (c *Collector) loop() {
+	c.logger.Printf("collect %s", c.path)
 	c.collect() // collect existing data.
 	for {
 		select {
-		case <-c.renameEvent:
-			utils.Protect(c.rename)
+		case newPath := <-c.renameEvent:
+			c.rename(newPath)
 		case <-c.writeEvent:
-			utils.Protect(c.collect)
-		case <-c.destroyEvent:
-			utils.Protect(c.destroy)
+			c.collect()
+		case <-c.removeEvent:
+			c.collect()
+			c.remove()
+			return
 		}
 	}
 }
 
 func (c *Collector) collect() {
 	for {
-		rows, drain := c.source.Read()
+		rows, drain := c.reader.Read()
 		if len(rows) > 0 {
 			c.pusher.Push(rows)
-			c.logger.Printf("%d, %s\n", len(rows), c.source.SaveOffset())
+			c.logger.Printf("%d, %s\n", len(rows), c.reader.SaveOffset())
 		}
 		if drain {
 			break
@@ -76,11 +75,14 @@ func (c *Collector) collect() {
 }
 
 func (c *Collector) rename(newPath string) {
-	s.source.RenameOffset(newPath)
-	s.logger.Rename()
+	c.logger.Printf("rename from %s to %s", c.path, newPath)
+	c.path = newPath
+	c.reader.Rename(newPath)
+	c.logger.Rename(newPath)
 }
 
-func (c *Collector) destroy() {
-	s.source.Destroy()
-	s.logger.Destroy()
+func (c *Collector) remove() {
+	c.logger.Printf("removed %s", c.path)
+	c.reader.Remove()
+	c.logger.Remove()
 }

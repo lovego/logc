@@ -8,24 +8,17 @@ import (
 )
 
 type Reader struct {
-	path       string
 	file       *os.File
 	offsetFile *offsetFile
 	reader     *bufio.Reader
 	logger     *log.Logger
 }
 
-func New(path string, logger *log.Logger) *Reader {
-	file, err := os.Open(path)
-	if err != nil {
-		logger.Printf("reader: open %s error: %v", path, err)
-		return nil
-	}
-	r := &Reader{path: path, file: file, reader: bufio.NewReader(file), logger: logger}
-	if offsetFile := newOffsetFile(path, logger); offsetFile != nil {
+func New(file *os.File, offsetPath string, logger *log.Logger) *Reader {
+	r := &Reader{file: file, reader: bufio.NewReader(file), logger: logger}
+	if offsetFile := newOffsetFile(offsetPath, logger); offsetFile != nil {
 		r.offsetFile = offsetFile
 	} else {
-		file.Close()
 		return nil
 	}
 	r.seekToSavedOffset()
@@ -46,7 +39,7 @@ func (r *Reader) Read() (rows []map[string]interface{}, drain bool) {
 					r.seekFrontIfTruncated()
 				}
 			} else {
-				r.logger.Printf("reader: read %s error: %v", r.path, err)
+				r.logger.Printf("reader: read error: %v", err)
 			}
 			return rows, true
 		}
@@ -64,21 +57,16 @@ func (r *Reader) SaveOffset() string {
 
 func (r *Reader) SameFile(fi os.FileInfo) bool {
 	if thisFi, err := r.file.Stat(); err != nil {
-		r.logger.Printf("reader: file.Stat %s error: %v", r.path, err)
+		r.logger.Printf("reader: stat error: %v", err)
 		return false
 	} else {
 		return os.SameFile(thisFi, fi)
 	}
 }
 
-func (r *Reader) Rename(newPath string) {
-	r.path = newPath
-	r.offsetFile.rename(newPath)
-}
-
 func (r *Reader) Remove() {
 	if err := r.file.Close(); err != nil {
-		r.logger.Printf("reader: close %s error: %v", r.path, err)
+		r.logger.Printf("reader: close error: %v", err)
 	}
 	r.offsetFile.remove()
 }

@@ -11,7 +11,9 @@ import (
 func getCollectors(collectorMakers map[string]func() Collector) map[string]Collector {
 	collectors := make(map[string]Collector)
 	for path, maker := range collectorMakers {
-		collectors[path] = maker()
+		if collector := maker(); collector != nil {
+			collectors[path] = collector
+		}
 	}
 	return collectors
 }

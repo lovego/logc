@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -17,13 +18,16 @@ type offsetFile struct {
 }
 
 func newOffsetFile(path string, logger *log.Logger) *offsetFile {
-	path += `.offset`
 	o := &offsetFile{path: path, logger: logger}
+	if err := os.MkdirAll(filepath.Dir(path), 0775); err != nil {
+		log.Printf("offset: mkdir %s error: %v", filepath.Dir(path), err)
+		return nil
+	}
 	if file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644); err == nil {
 		o.file = file
 		return o
 	} else {
-		logger.Printf("offset: open %s error: %v", path, err)
+		logger.Printf("offset: %v", err) // os.PathError is enough
 		return nil
 	}
 }
@@ -58,15 +62,6 @@ func (o *offsetFile) save(offset int64) string {
 		o.logger.Printf("offset: write %s error: %v", o.path, err)
 	}
 	return offsetStr
-}
-
-func (o *offsetFile) rename(newPath string) {
-	newPath += `.offset`
-	if err := os.Rename(o.path, newPath); err == nil {
-		o.path = newPath
-	} else {
-		o.logger.Printf("offset: rename %s to %s error: %v", o.path, newPath, err)
-	}
 }
 
 func (o *offsetFile) remove() {

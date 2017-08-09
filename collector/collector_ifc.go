@@ -11,13 +11,6 @@ func (c *Collector) NotifyWrite() {
 	}
 }
 
-func (c *Collector) NotifyRename(newPath string) {
-	select {
-	case c.renameEvent <- newPath:
-	default:
-	}
-}
-
 func (c *Collector) NotifyRemove() {
 	select {
 	case c.removeEvent <- struct{}{}:
@@ -27,4 +20,8 @@ func (c *Collector) NotifyRemove() {
 
 func (c *Collector) OpenedSameFile(fi os.FileInfo) bool {
 	return c.reader.SameFile(fi)
+}
+
+func (c *Collector) Printf(format string, v ...interface{}) {
+	c.logger.Printf(format, v...)
 }

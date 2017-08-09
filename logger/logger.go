@@ -3,6 +3,7 @@ package logger
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/lovego/xiaomei/utils/fs"
 )
@@ -14,14 +15,17 @@ type Logger struct {
 }
 
 func New(path string) *Logger {
-	path += `.logc`
 	l := &Logger{path: path}
+	if err := os.MkdirAll(filepath.Dir(path), 0775); err != nil {
+		log.Printf("logger: mkdir %s error: %v", filepath.Dir(path), err)
+		return nil
+	}
 	if file, err := fs.OpenAppend(path); err == nil {
 		l.file = file
 		l.Logger = log.New(file, ``, log.LstdFlags)
 		return l
 	} else {
-		log.Printf("logger: open %s error: %v", path, err)
+		log.Printf("logger: %v", err) // os.PathError is enough
 		return nil
 	}
 }
@@ -30,20 +34,15 @@ func (l *Logger) Get() *log.Logger {
 	return l.Logger
 }
 
-func (l *Logger) Rename(newPath string) {
-	newPath += `.logc`
-	if err := os.Rename(l.path, newPath); err == nil {
-		l.path = newPath
-	} else {
-		l.Printf("logger: rename %s to %s error: %v", l.path, newPath, err)
+func (l *Logger) Close() {
+	if err := l.file.Close(); err != nil {
+		log.Printf("logger: close %s error: %v", l.path, err)
 	}
 }
 
 func (l *Logger) Remove() {
-	if err := l.file.Close(); err != nil {
-		l.Printf("logger: close %s error: %v", l.path, err)
-	}
+	l.Close()
 	if err := os.Remove(l.path); err != nil && !os.IsNotExist(err) {
-		l.Printf("logger: remove %s error: %v", l.path, err)
+		log.Printf("logger: remove %s error: %v", l.path, err)
 	}
 }

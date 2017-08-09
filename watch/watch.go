@@ -38,8 +38,6 @@ func Watch(collectorMakers map[string]func() Collector) {
 		case err := <-dirsWatcher.Errors:
 			log.Printf("dirs watcher error: %v\n", err)
 		case event := <-dirsWatcher.Events:
-			log.Println(event)
-
 			path := strings.TrimPrefix(event.Name, `./`)
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				if collector := collectors[path]; collector != nil {

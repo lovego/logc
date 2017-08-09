@@ -11,8 +11,15 @@ import (
 type sourceIfc interface {
 	Read() (rows []map[string]interface{}, drain bool)
 	SaveOffset() string
-	Opened() bool
-	Reopen()
+	RenameOffset(string)
+	Destroy()
+}
+
+type loggerIfc interface {
+	Printf(format string, v ...interface{})
+	Println(v ...interface{})
+	Rename(string)
+	Destroy()
 }
 
 type pusherIfc interface {
@@ -21,18 +28,19 @@ type pusherIfc interface {
 
 type Collector struct {
 	source       sourceIfc
+	logger       loggerIfc
 	pusher       pusherIfc
-	logger       *log.Logger
 	writeEvent   chan struct{}
 	renameEvent  chan struct{}
 	destroyEvent chan struct{}
 }
 
-func New(path string, source sourceIfc, pusher pusherIfc, logger *log.Logger) *Collector {
+func New(path string, source sourceIfc, logger loggerIfc, pusher pusherIfc) *Collector {
 	c := &Collector{
 		source: source, pusher: pusher, logger: logger,
-		writeEvent:  make(chan struct{}, 1),
-		createEvent: make(chan struct{}, 1),
+		writeEvent:   make(chan struct{}, 1),
+		renameEvent:  make(chan struct{}, 1),
+		destroyEvent: make(chan struct{}, 1),
 	}
 
 	c.logger.Println(`listen ` + path)
@@ -41,9 +49,7 @@ func New(path string, source sourceIfc, pusher pusherIfc, logger *log.Logger) *C
 }
 
 func (c *Collector) loop(path string) {
-	if fs.Exist(path) {
-		c.collect() // collect existing data.
-	}
+	c.collect() // collect existing data.
 	for {
 		select {
 		case <-c.renameEvent:
@@ -69,23 +75,12 @@ func (c *Collector) collect() {
 	}
 }
 
-func (c *Collector) NotifyWrite() {
-	select {
-	case c.writeEvent <- struct{}{}:
-	default:
-	}
+func (c *Collector) rename(newPath string) {
+	s.source.RenameOffset(newPath)
+	s.logger.Rename()
 }
 
-func (c *Collector) NotifyCreate() {
-	select {
-	case c.createEvent <- struct{}{}:
-	default:
-	}
-}
-
-func (c *Collector) OpenedSameFile(os.FileInfo) bool {
-	return false
-}
-
-func (c *Collector) Destroy() {
+func (c *Collector) destroy() {
+	s.source.Destroy()
+	s.logger.Destroy()
 }

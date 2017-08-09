@@ -4,7 +4,6 @@ import (
 	"log"
 	"path/filepath"
 
-	// "github.com/lovego/xiaomei/utils/fs"
 	"gopkg.in/fsnotify.v1"
 )
 

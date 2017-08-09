@@ -6,22 +6,31 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/lovego/logc/collector"
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-type Pusher struct {
+type Getter struct {
 	pushUrl string
-	logger  *log.Logger
 }
 
-func New(addr, org, file, mergeJson string, logger *log.Logger) *Pusher {
+func NewGetter(addr, org, file, mergeJson string) collector.PusherGetter {
 	query := url.Values{}
 	query.Set(`org`, org)
 	query.Set(`file`, file)
 	if mergeJson != `` {
 		query.Set(`merge`, mergeJson)
 	}
-	return &Pusher{pushUrl: addr + `/logs-data?` + query.Encode(), logger: logger}
+	return &Getter{pushUrl: addr + `/logs-data?` + query.Encode()}
+}
+
+func (g *Getter) Get(logger *log.Logger) collector.Pusher {
+	return &Pusher{pushUrl: g.pushUrl, logger: logger}
+}
+
+type Pusher struct {
+	pushUrl string
+	logger  *log.Logger
 }
 
 func (p *Pusher) Push(rows []map[string]interface{}) {

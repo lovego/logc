@@ -17,7 +17,7 @@ type Logger struct {
 func New(path string) *Logger {
 	l := &Logger{path: path}
 	if err := os.MkdirAll(filepath.Dir(path), 0775); err != nil {
-		log.Printf("logger: mkdir %s error: %v", filepath.Dir(path), err)
+		log.Printf("logger: %v", err) // os.PathError is enough
 		return nil
 	}
 	if file, err := fs.OpenAppend(path); err == nil {

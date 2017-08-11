@@ -20,7 +20,7 @@ type offsetFile struct {
 func newOffsetFile(path string, logger *log.Logger) *offsetFile {
 	o := &offsetFile{path: path, logger: logger}
 	if err := os.MkdirAll(filepath.Dir(path), 0775); err != nil {
-		log.Printf("offset: mkdir %s error: %v", filepath.Dir(path), err)
+		log.Printf("offset: %v", err) // os.PathError is enough
 		return nil
 	}
 	if file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644); err == nil {

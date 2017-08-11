@@ -10,9 +10,9 @@ func (c *Collector) loop() {
 		select {
 		case <-c.writeEvent:
 			c.collect()
-		case <-c.removeEvent:
+		case <-c.closeEvent:
 			c.collect()
-			c.remove()
+			c.close()
 			return
 		}
 	}
@@ -31,10 +31,10 @@ func (c *Collector) collect() {
 	}
 }
 
-func (c *Collector) remove() {
-	c.logger.Printf("remove")
-	c.reader.Remove()
-	c.logger.Remove()
+func (c *Collector) close() {
+	c.logger.Printf("collector close")
+	c.reader.Close()
+	c.logger.Close()
 }
 
 func (c *Collector) NotifyWrite() {
@@ -44,9 +44,9 @@ func (c *Collector) NotifyWrite() {
 	}
 }
 
-func (c *Collector) NotifyRemove() {
+func (c *Collector) NotifyClose() {
 	select {
-	case c.removeEvent <- struct{}{}:
+	case c.closeEvent <- struct{}{}:
 	default:
 	}
 }

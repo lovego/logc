@@ -64,11 +64,8 @@ func (o *offsetFile) save(offset int64) string {
 	return offsetStr
 }
 
-func (o *offsetFile) remove() {
+func (o *offsetFile) Close() {
 	if err := o.file.Close(); err != nil {
 		o.logger.Printf("offset: close %s error: %v", o.path, err)
-	}
-	if err := os.Remove(o.path); err != nil && !os.IsNotExist(err) {
-		o.logger.Printf("offset: remove %s error: %v", o.path, err)
 	}
 }

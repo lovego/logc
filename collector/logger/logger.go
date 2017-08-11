@@ -39,10 +39,3 @@ func (l *Logger) Close() {
 		log.Printf("logger: close %s error: %v", l.path, err)
 	}
 }
-
-func (l *Logger) Remove() {
-	l.Close()
-	if err := os.Remove(l.path); err != nil && !os.IsNotExist(err) {
-		log.Printf("logger: remove %s error: %v", l.path, err)
-	}
-}

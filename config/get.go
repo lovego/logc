@@ -11,28 +11,31 @@ import (
 )
 
 func Get() Config {
-	conf := parse(filePath())
+	configFile := flag.Arg(0)
+	if notExist(configFile) {
+		log.Fatal(configFile + ` not exist.`)
+	}
+	conf := parse(configFile)
 	check(&conf)
 	return conf
 }
 
-func filePath() string {
-	help := flag.Bool(`help`, false, `print help message.`)
+func init() {
 	flag.CommandLine.Usage = usage
 	flag.Parse()
 
-	if flag.NArg() > 1 || *help {
+	if flag.NArg() != 1 {
 		usage()
 		os.Exit(1)
 	}
-	configFile := flag.Arg(0)
-	if configFile == `` {
-		configFile = `logc.yml`
-	}
-	if notExist(configFile) {
-		log.Fatal(configFile + ` not exist.`)
-	}
-	return configFile
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr,
+		`logc watch files, collect content, and push to logd server. (version: 17.8.11)
+usage: %s <yaml-config-file>
+`, os.Args[0])
+	flag.PrintDefaults()
 }
 
 func parse(configFile string) Config {
@@ -53,13 +56,6 @@ func parse(configFile string) Config {
 		log.Fatalf(`%s: %s: undefined.`, configFile, env)
 	}
 	return conf
-}
-
-func usage() {
-	fmt.Fprintf(os.Stderr,
-		"Usage: %s [config-file] (default: logc.yml)\n"+
-			"logc watch files, collect content, and push to logd server.\n", os.Args[0],
-	)
 }
 
 func notExist(p string) bool {

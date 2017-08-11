@@ -13,14 +13,14 @@ import (
 
 type Logger interface {
 	Printf(format string, v ...interface{})
-	Remove()
+	Close()
 }
 
 type Reader interface {
 	Read() (rows []map[string]interface{}, drain bool)
 	SaveOffset() string
 	SameFile(os.FileInfo) bool
-	Remove()
+	Close()
 }
 
 type PusherGetter interface {
@@ -32,11 +32,11 @@ type Pusher interface {
 }
 
 type Collector struct {
-	logger      Logger
-	reader      Reader
-	pusher      Pusher
-	writeEvent  chan struct{}
-	removeEvent chan struct{}
+	logger     Logger
+	reader     Reader
+	pusher     Pusher
+	writeEvent chan struct{}
+	closeEvent chan struct{}
 }
 
 func New(path string, pusherGetter PusherGetter) *Collector {
@@ -49,8 +49,8 @@ func New(path string, pusherGetter PusherGetter) *Collector {
 				if r := reader.New(f, logcPath+`.offset`, l.Get()); r != nil {
 					c := &Collector{
 						logger: l, reader: r, pusher: pusherGetter.Get(l.Get()),
-						writeEvent:  make(chan struct{}, 1),
-						removeEvent: make(chan struct{}, 1),
+						writeEvent: make(chan struct{}, 1),
+						closeEvent: make(chan struct{}, 1),
 					}
 					go c.loop()
 					return c

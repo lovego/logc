@@ -64,9 +64,9 @@ func (r *Reader) SameFile(fi os.FileInfo) bool {
 	}
 }
 
-func (r *Reader) Remove() {
+func (r *Reader) Close() {
 	if err := r.file.Close(); err != nil {
 		r.logger.Printf("reader: close error: %v", err)
 	}
-	r.offsetFile.remove()
+	r.offsetFile.Close()
 }

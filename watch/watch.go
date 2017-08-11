@@ -9,7 +9,7 @@
 	a. 文件被重命名：对比当前文件和所有已经打开的文件，如果是同一文件，更新收集器Map。
 	b. 目标文件被创建: 应该通知收集器重新打开该文件。
 3. Remove
-  文件被删除，移除收集器
+  文件被删除，关闭收集器
 */
 package watch
 
@@ -23,7 +23,7 @@ import (
 
 type Collector interface {
 	NotifyWrite()
-	NotifyRemove()
+	NotifyClose()
 	OpenedSameFile(os.FileInfo) bool
 	Printf(format string, v ...interface{})
 }
@@ -87,7 +87,7 @@ func handleCreate(
 
 func handleRemove(path string, collectors map[string]Collector) {
 	if collector := collectors[path]; collector != nil {
-		collector.NotifyRemove()
+		collector.NotifyClose()
 		delete(collectors, path)
 	}
 }

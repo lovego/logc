@@ -28,6 +28,10 @@ func main() {
 
 func collectorGetter(path string, pusherGetter collector.PusherGetter) func() watch.Collector {
 	return func() watch.Collector {
-		return collector.New(path, pusherGetter)
+		if c := collector.New(path, pusherGetter); c == nil {
+			return nil // must
+		} else {
+			return c // nil pointer makes a non nil interface
+		}
 	}
 }

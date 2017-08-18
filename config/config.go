@@ -8,10 +8,12 @@ import (
 )
 
 type Config struct {
-	LogdAddr  string `yaml:"logdAddr"`
-	MergeJson string
-	MergeData map[string]interface{} `yaml:"mergeData"`
-	Files     []*File                `yaml:"files"`
+	LogdAddr   string `yaml:"logdAddr"`
+	MergeJson  string
+	MergeData  map[string]interface{} `yaml:"mergeData"`
+	Files      []*File                `yaml:"files"`
+	RotateTime string                 `yaml:"rotateTime"`
+	RotateCmd  []string               `yaml:"rotateCmd"`
 }
 
 type File struct {

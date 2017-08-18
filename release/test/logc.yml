@@ -16,21 +16,23 @@ defaults: &defaults
     - { org: test-org, name: app-log, path: app.log, mapping: *mapping }
     - { org: test-org, name: app-err, path: app.err, mapping: *mapping }
     - { org: test-consume, name: consume-log, path: consume.log, mapping: *mappingConsume }
-  mapping: &mapping
-    at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }
-    duration: { type: float }
-    host: { type: keyword }
-    method: { type: keyword }
-    path: { type: text }
-    query: { type: text }
-    status: { type: keyword }
-    req_body: { type: integer }
-    res_body: { type: integer }
-    ip: { type: ip }
-    refer: { type: text }
-    agent: { type: text }
-    proto: { type: keyword }
-    # session: sess
-  mappingConsume: &mappingConsume
-    at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }
-    data: { type: object }
+  rotateTime: "33 * * * * *"
+  rotateCmd:  [ logrotate, -v, logrotate.conf ]
+mapping: &mapping
+  at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }
+  duration: { type: float }
+  host: { type: keyword }
+  method: { type: keyword }
+  path: { type: text }
+  query: { type: text }
+  status: { type: keyword }
+  req_body: { type: integer }
+  res_body: { type: integer }
+  ip: { type: ip }
+  refer: { type: text }
+  agent: { type: text }
+  proto: { type: keyword }
+  # session: sess
+mappingConsume: &mappingConsume
+  at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }
+  data: { type: object }

@@ -2,13 +2,16 @@ package pusher
 
 import (
 	"encoding/json"
-	"log"
+	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/lovego/logc/collector"
 	"github.com/lovego/xiaomei/utils/httputil"
+	"github.com/lovego/xiaomei/utils/logger"
 )
+
+var httpClient = &httputil.Client{Client: http.DefaultClient}
 
 type Getter struct {
 	pushUrl string
@@ -24,13 +27,13 @@ func NewGetter(addr, org, file, mergeJson string) collector.PusherGetter {
 	return &Getter{pushUrl: addr + `/logs-data?` + query.Encode()}
 }
 
-func (g *Getter) Get(logger *log.Logger) collector.Pusher {
-	return &Pusher{pushUrl: g.pushUrl, logger: logger}
+func (g *Getter) Get(log *logger.Logger) collector.Pusher {
+	return &Pusher{pushUrl: g.pushUrl, logger: log}
 }
 
 type Pusher struct {
 	pushUrl string
-	logger  *log.Logger
+	logger  *logger.Logger
 }
 
 func (p *Pusher) Push(rows []map[string]interface{}) {
@@ -39,10 +42,10 @@ func (p *Pusher) Push(rows []map[string]interface{}) {
 	}
 	content, err := json.Marshal(rows)
 	if err != nil {
-		p.logger.Printf("marshal rows error: %v\n", err)
+		p.logger.Errorf("marshal rows error: %v\n", err)
 		return
 	}
-	const max = time.Hour
+	const max = 10 * time.Minute
 	for interval := time.Second; ; {
 		if p.push(content) {
 			return
@@ -63,13 +66,13 @@ func (p *Pusher) push(content []byte) bool {
 		Message string `json:"message"`
 	}{}
 
-	err := httputil.PostJson(p.pushUrl, nil, content, &result)
+	err := httpClient.PostJson(p.pushUrl, nil, content, &result)
 	if err != nil {
-		p.logger.Println("push data error: ", err)
+		p.logger.Error("push data error: ", err)
 		return false
 	}
 	if result.Code != `ok` {
-		p.logger.Printf("push data failed: %+v", result)
+		p.logger.Errorf("push data failed: %+v", result)
 		return false
 	}
 	return true

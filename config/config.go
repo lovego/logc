@@ -12,8 +12,12 @@ type Config struct {
 	MergeJson  string
 	MergeData  map[string]interface{} `yaml:"mergeData"`
 	Files      []*File                `yaml:"files"`
+	BatchSize  int                    `yaml:"batchSize"`
 	RotateTime string                 `yaml:"rotateTime"`
 	RotateCmd  []string               `yaml:"rotateCmd"`
+	Name       string                 `yaml:"name"`
+	Mailer     string                 `yaml:"mailer"`
+	Keepers    []string               `yaml:"keepers"`
 }
 
 type File struct {

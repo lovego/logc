@@ -2,14 +2,14 @@ package pusher
 
 import (
 	"encoding/json"
-	"log"
 	"net/url"
 
 	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/httputil"
+	"github.com/lovego/xiaomei/utils/logger"
 )
 
-func CreateMappings(logdAddr string, filesAry []*config.File) {
+func CreateMappings(logdAddr string, filesAry []*config.File, log *logger.Logger) {
 	mappings := make(map[string][]map[string]interface{})
 	for _, file := range filesAry {
 		org := file.Org
@@ -21,11 +21,11 @@ func CreateMappings(logdAddr string, filesAry []*config.File) {
 		})
 	}
 	for org, filesMapping := range mappings {
-		createMappings(logdAddr, org, filesMapping)
+		createMappings(logdAddr, org, filesMapping, log)
 	}
 }
 
-func createMappings(logdAddr, org string, files []map[string]interface{}) {
+func createMappings(logdAddr, org string, files []map[string]interface{}, log *logger.Logger) {
 	filesJson, err := json.Marshal(files)
 	if err != nil {
 		log.Fatal("marshal mappings error: ", err)

@@ -3,18 +3,19 @@ package reader
 import (
 	"bufio"
 	"io"
-	"log"
 	"os"
+
+	"github.com/lovego/xiaomei/utils/logger"
 )
 
 type Reader struct {
 	file       *os.File
 	offsetFile *offsetFile
 	reader     *bufio.Reader
-	logger     *log.Logger
+	logger     *logger.Logger
 }
 
-func New(file *os.File, offsetPath string, logger *log.Logger) *Reader {
+func New(file *os.File, offsetPath string, logger *logger.Logger) *Reader {
 	r := &Reader{file: file, reader: bufio.NewReader(file), logger: logger}
 	if offsetFile := newOffsetFile(offsetPath, logger); offsetFile != nil {
 		r.offsetFile = offsetFile
@@ -26,8 +27,16 @@ func New(file *os.File, offsetPath string, logger *log.Logger) *Reader {
 	return r
 }
 
+var batchSize = 100 * 1024
+
+func SetBatchSize(size int) {
+	if size > 0 {
+		batchSize = size
+	}
+}
+
 func (r *Reader) Read() (rows []map[string]interface{}, drain bool) {
-	for size := 0; size < 2*1024*1024; {
+	for size := 0; size < batchSize; {
 		line, err := r.reader.ReadBytes('\n')
 		if row := r.parseRow(line); row != nil {
 			rows = append(rows, row)
@@ -39,7 +48,7 @@ func (r *Reader) Read() (rows []map[string]interface{}, drain bool) {
 					r.seekFrontIfTruncated()
 				}
 			} else {
-				r.logger.Printf("reader: read error: %v", err)
+				r.logger.Errorf("reader: read error: %v", err)
 			}
 			return rows, true
 		}
@@ -57,7 +66,7 @@ func (r *Reader) SaveOffset() string {
 
 func (r *Reader) SameFile(fi os.FileInfo) bool {
 	if thisFi, err := r.file.Stat(); err != nil {
-		r.logger.Printf("reader: stat error: %v", err)
+		r.logger.Errorf("reader: stat error: %v", err)
 		return false
 	} else {
 		return os.SameFile(thisFi, fi)
@@ -66,7 +75,7 @@ func (r *Reader) SameFile(fi os.FileInfo) bool {
 
 func (r *Reader) Close() {
 	if err := r.file.Close(); err != nil {
-		r.logger.Printf("reader: close error: %v", err)
+		r.logger.Errorf("reader: close error: %v", err)
 	}
 	r.offsetFile.Close()
 }

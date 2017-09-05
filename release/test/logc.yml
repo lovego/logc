@@ -12,12 +12,16 @@ production:
   <<: *defaults
 
 defaults: &defaults
+  names: test
   files:
     - { org: test-org, name: app-log, path: app.log, mapping: *mapping }
     - { org: test-org, name: app-err, path: app.err, mapping: *mapping }
     - { org: test-consume, name: consume-log, path: consume.log, mapping: *mappingConsume }
   rotateTime: "33 * * * * *"
-  rotateCmd:  [ logrotate, -v, logrotate.conf ]
+  rotateCmd:  [ logrotate, logrotate.conf ]
+  batchSize: 1024
+  mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
+  keepers: [ "houzhiliang@retail-tek.com" ]
 
 mapping: &mapping
   at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }

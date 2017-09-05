@@ -1,14 +1,10 @@
 package collector
 
 import (
-	"log"
 	"os"
-	"path/filepath"
-	"strconv"
-	"syscall"
 
-	"github.com/lovego/logc/collector/logger"
 	"github.com/lovego/logc/collector/reader"
+	"github.com/lovego/xiaomei/utils/logger"
 )
 
 type Logger interface {
@@ -24,7 +20,7 @@ type Reader interface {
 }
 
 type PusherGetter interface {
-	Get(*log.Logger) Pusher
+	Get(*logger.Logger) Pusher
 }
 
 type Pusher interface {
@@ -32,7 +28,8 @@ type Pusher interface {
 }
 
 type Collector struct {
-	logger     Logger
+	logFile    *os.File
+	logger     *logger.Logger
 	reader     Reader
 	pusher     Pusher
 	writeEvent chan struct{}
@@ -40,60 +37,24 @@ type Collector struct {
 }
 
 func New(path string, pusherGetter PusherGetter) *Collector {
-	var f *os.File
-	var l *logger.Logger
-	if f = openFile(path); f != nil {
-		if logcPath := getLogcPath(path, f); logcPath != `` {
-			if l = logger.New(logcPath + `.log`); l != nil {
-				l.Printf("collect %s", path)
-				if r := reader.New(f, logcPath+`.offset`, l.Get()); r != nil {
-					c := &Collector{
-						logger: l, reader: r, pusher: pusherGetter.Get(l.Get()),
+	var file, logFile *os.File
+	if file = openFile(path); file != nil {
+		if logcPath := getLogcPath(path, file); logcPath != `` {
+			if logFile := openLogFile(logcPath + `.log`); logFile != nil {
+				theLogger := logger.New(``, logFile, theAlarm)
+				theLogger.Printf("collect %s", path)
+				if theReader := reader.New(file, logcPath+`.offset`, theLogger); theReader != nil {
+					collector := &Collector{
+						logger: theLogger, reader: theReader, pusher: pusherGetter.Get(theLogger),
 						writeEvent: make(chan struct{}, 1),
 						closeEvent: make(chan struct{}, 1),
 					}
-					go c.loop()
-					return c
+					go collector.loop()
+					return collector
 				}
 			}
 		}
 	}
-	freeResource(f, l, path)
+	freeResource(file, logFile)
 	return nil
-}
-
-func openFile(path string) *os.File {
-	file, err := os.Open(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			log.Println(err) // os.PathError is enough
-		}
-		return nil
-	}
-	return file
-}
-
-func getLogcPath(path string, f *os.File) string {
-	fi, err := f.Stat()
-	if err != nil {
-		log.Println("stat:", err)
-		return ``
-	}
-	sys, ok := fi.Sys().(*syscall.Stat_t)
-	if !ok || sys == nil {
-		log.Printf("unexpected FileInfo.Sys(): %#v", fi.Sys())
-		return ``
-	}
-	return filepath.Join(filepath.Dir(path), `logc`, strconv.FormatUint(sys.Ino, 10))
-}
-
-func freeResource(f *os.File, l *logger.Logger, path string) {
-	if f != nil {
-		if err := f.Close(); err != nil {
-			log.Printf("close %s error: %v", path, err)
-		}
-	}
-	if l != nil {
-		l.Close()
-	}
 }

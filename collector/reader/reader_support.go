@@ -15,7 +15,7 @@ func (r *Reader) parseRow(line []byte) map[string]interface{} {
 		return row
 	} else {
 		if line = bytes.TrimSpace(line); len(line) > 0 {
-			r.logger.Printf("reader: unmarshal json error(%v): %s", err, line)
+			r.logger.Errorf("reader: unmarshal json error(%v): %s", err, line)
 		}
 		return nil
 	}
@@ -28,10 +28,10 @@ func (r *Reader) seekToSavedOffset() {
 			if _, err := r.file.Seek(offset, os.SEEK_SET); err == nil {
 				r.logger.Printf("reader: seekToSavedOffset: %d, size: %d", offset, size)
 			} else {
-				r.logger.Printf("reader: seekToSavedOffset: %d, size: %d, error: %v", offset, size, err)
+				r.logger.Errorf("reader: seekToSavedOffset: %d, size: %d, error: %v", offset, size, err)
 			}
 		} else {
-			r.logger.Printf("reader: seekToSavedOffset: offset %d exceeds size %d", offset, size)
+			r.logger.Errorf("reader: seekToSavedOffset: offset %d exceeds size %d", offset, size)
 		}
 	}
 }
@@ -44,7 +44,7 @@ func (r *Reader) seekFrontIfTruncated() {
 				r.logger.Printf("reader: seekFront(offset: %d, size: %d)", offset, size)
 				r.reader.Reset(r.file)
 			} else {
-				r.logger.Printf(
+				r.logger.Errorf(
 					"reader: seekFront(offset: %d, size: %d) error: %v", offset, size, err,
 				)
 			}
@@ -56,7 +56,7 @@ func (r *Reader) offset() int64 {
 	if offset, err := r.file.Seek(0, os.SEEK_CUR); err == nil {
 		return offset
 	} else {
-		r.logger.Printf("reader: get offset error: %v", err)
+		r.logger.Errorf("reader: get offset error: %v", err)
 		return -1
 	}
 }
@@ -65,7 +65,7 @@ func (r *Reader) size() int64 {
 	if fi, err := r.file.Stat(); err == nil {
 		return fi.Size()
 	} else {
-		r.logger.Printf("reader: get size error: %v", err)
+		r.logger.Errorf("reader: get size error: %v", err)
 		return -1
 	}
 }

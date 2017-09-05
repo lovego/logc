@@ -54,7 +54,7 @@ func (r *Reader) seekFrontIfTruncated() {
 
 func (r *Reader) offset() int64 {
 	if offset, err := r.file.Seek(0, os.SEEK_CUR); err == nil {
-		return offset
+		return offset - int64(r.reader.Buffered())
 	} else {
 		r.logger.Errorf("reader: get offset error: %v", err)
 		return -1

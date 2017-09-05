@@ -12,7 +12,7 @@ production:
   <<: *defaults
 
 defaults: &defaults
-  names: test
+  name: test
   files:
     - { org: test-org, name: app-log, path: app.log, mapping: *mapping }
     - { org: test-org, name: app-err, path: app.err, mapping: *mapping }

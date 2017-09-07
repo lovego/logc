@@ -11,6 +11,7 @@ import (
 type Reader struct {
 	file       *os.File
 	offsetFile *offsetFile
+	buffered   []byte
 	reader     *bufio.Reader
 	logger     *logger.Logger
 }
@@ -37,10 +38,12 @@ func SetBatchSize(size int) {
 
 func (r *Reader) Read() (rows []map[string]interface{}, drain bool) {
 	for size := 0; size < batchSize; {
-		line, err := r.reader.ReadBytes('\n')
-		if row := r.parseRow(line); row != nil {
-			rows = append(rows, row)
-			size += len(line)
+		line, err := r.readLine()
+		if len(line) > 0 {
+			if row := r.parseRow(line); row != nil {
+				rows = append(rows, row)
+				size += len(line)
+			}
 		}
 		if err != nil {
 			if err == io.EOF {

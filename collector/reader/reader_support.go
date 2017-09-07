@@ -6,10 +6,23 @@ import (
 	"os"
 )
 
-func (r *Reader) parseRow(line []byte) map[string]interface{} {
+func (r *Reader) readLine() ([]byte, error) {
+	line, err := r.reader.ReadBytes('\n')
 	if len(line) == 0 {
-		return nil
+		return line, err
 	}
+	if line[len(line)-1] != '\n' {
+		r.buffered = append(r.buffered, line...)
+		return nil, err
+	}
+	if len(r.buffered) > 0 {
+		line = append(r.buffered, line...)
+		r.buffered = nil
+	}
+	return line, err
+}
+
+func (r *Reader) parseRow(line []byte) map[string]interface{} {
 	var row map[string]interface{}
 	if err := json.Unmarshal(line, &row); err == nil {
 		return row
@@ -54,7 +67,7 @@ func (r *Reader) seekFrontIfTruncated() {
 
 func (r *Reader) offset() int64 {
 	if offset, err := r.file.Seek(0, os.SEEK_CUR); err == nil {
-		return offset - int64(r.reader.Buffered())
+		return offset - int64(r.reader.Buffered()+len(r.buffered))
 	} else {
 		r.logger.Errorf("reader: get offset error: %v", err)
 		return -1

@@ -30,9 +30,6 @@ type File struct {
 func check(conf *Config) {
 	checkLogdAddress(conf)
 	checkMergeData(conf)
-	if len(conf.Files) == 0 {
-		log.Fatal(`files required.`)
-	}
 	for _, file := range conf.Files {
 		checkFile(file)
 	}

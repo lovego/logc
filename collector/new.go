@@ -45,7 +45,10 @@ func New(path string, pusherGetter PusherGetter) *Collector {
 				theLogger.Printf("collect %s", path)
 				if theReader := reader.New(file, logcPath+`.offset`, theLogger); theReader != nil {
 					collector := &Collector{
-						logger: theLogger, reader: theReader, pusher: pusherGetter.Get(theLogger),
+						logFile:    logFile,
+						logger:     theLogger,
+						reader:     theReader,
+						pusher:     pusherGetter.Get(theLogger),
 						writeEvent: make(chan struct{}, 1),
 						closeEvent: make(chan struct{}, 1),
 					}

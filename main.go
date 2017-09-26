@@ -30,7 +30,7 @@ func main() {
 
 	collector.SetAlarm(theAlarm)
 	collector.SetLogger(log)
-	reader.SetBatchSize(conf.BatchSize)
+	reader.SetBatch(conf.BatchSize, conf.BatchWaitDuration)
 
 	pusher.CreateMappings(conf.LogdAddr, conf.Files, log)
 	startRotate(conf.RotateTime, conf.RotateCmd, log)

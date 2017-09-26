@@ -32,7 +32,7 @@ func init() {
 
 func usage() {
 	fmt.Fprintf(os.Stderr,
-		`logc watch files, collect content, and push to logd server. (version: 17.9.14)
+		`logc watch files, collect content, and push to logd server. (version: 17.9.26)
 usage: %s <yaml-config-file>
 `, os.Args[0])
 	flag.PrintDefaults()

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"time"
 
 	"github.com/lovego/xiaomei/utils/logger"
 )
@@ -29,34 +30,52 @@ func New(file *os.File, offsetPath string, logger *logger.Logger) *Reader {
 }
 
 var batchSize = 100 * 1024
+var batchWait = time.Second
 
-func SetBatchSize(size int) {
+func SetBatch(size int, wait time.Duration) {
 	if size > 0 {
 		batchSize = size
 	}
+	if wait >= 0 {
+		batchWait = wait
+	}
 }
 
-func (r *Reader) Read() (rows []map[string]interface{}, drain bool) {
-	for size := 0; size < batchSize; {
-		line, err := r.readLine()
-		if len(line) > 0 {
-			if row := r.parseRow(line); row != nil {
+// drain 是否读完了所有内容
+func (r *Reader) Read() ([]map[string]interface{}, bool) {
+	rows, drain, size := r.readSize(batchSize)
+	if len(rows) > 0 && drain && batchWait > 0 {
+		time.Sleep(batchWait)
+		if rows2, drain2, _ := r.readSize(batchSize - size); len(rows2) > 0 {
+			rows = append(rows, rows2...)
+			drain = drain2
+		}
+	}
+	if len(rows) == 0 {
+		r.seekFrontIfTruncated()
+	}
+	return rows, drain
+}
+
+func (r *Reader) readSize(targetSize int) (rows []map[string]interface{}, drain bool, size int) {
+	// 读到文件末尾时返回错误：io.EOF
+	var err error
+	for err == nil && size < targetSize {
+		var line []byte
+		if line, err = r.readLine(); len(line) > 0 {
+			if row := r.parseLine(line); row != nil {
 				rows = append(rows, row)
 				size += len(line)
 			}
 		}
-		if err != nil {
-			if err == io.EOF {
-				if size == 0 && len(line) == 0 {
-					r.seekFrontIfTruncated()
-				}
-			} else {
-				r.logger.Errorf("reader: read error: %v", err)
-			}
-			return rows, true
+	}
+	if err != nil {
+		drain = true // 读到文件末尾或者读取出错都认为都完了所有内容
+		if err != io.EOF {
+			r.logger.Errorf("reader: read error: %v", err)
 		}
 	}
-	return rows, false
+	return
 }
 
 func (r *Reader) SaveOffset() string {

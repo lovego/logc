@@ -5,19 +5,22 @@ import (
 	"log"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type Config struct {
-	LogdAddr   string `yaml:"logdAddr"`
-	MergeJson  string
-	MergeData  map[string]interface{} `yaml:"mergeData"`
-	Files      []*File                `yaml:"files"`
-	BatchSize  int                    `yaml:"batchSize"`
-	RotateTime string                 `yaml:"rotateTime"`
-	RotateCmd  []string               `yaml:"rotateCmd"`
-	Name       string                 `yaml:"name"`
-	Mailer     string                 `yaml:"mailer"`
-	Keepers    []string               `yaml:"keepers"`
+	Name              string                 `yaml:"name"`
+	LogdAddr          string                 `yaml:"logdAddr"`
+	MergeJson         string                 `yaml:"-"`
+	MergeData         map[string]interface{} `yaml:"mergeData"`
+	BatchSize         int                    `yaml:"batchSize"`
+	BatchWait         string                 `yaml:"batchWait"`
+	BatchWaitDuration time.Duration          `yaml:"-"`
+	RotateTime        string                 `yaml:"rotateTime"`
+	RotateCmd         []string               `yaml:"rotateCmd"`
+	Mailer            string                 `yaml:"mailer"`
+	Keepers           []string               `yaml:"keepers"`
+	Files             []*File                `yaml:"files"`
 }
 
 type File struct {
@@ -30,6 +33,7 @@ type File struct {
 func check(conf *Config) {
 	checkLogdAddress(conf)
 	checkMergeData(conf)
+	checkBatchWait(conf)
 	for _, file := range conf.Files {
 		checkFile(file)
 	}
@@ -53,6 +57,18 @@ func checkMergeData(conf *Config) {
 			conf.MergeJson = string(buf)
 		}
 	}
+}
+
+func checkBatchWait(conf *Config) {
+	if conf.BatchWait == `` {
+		conf.BatchWaitDuration = -1
+		return
+	}
+	duration, err := time.ParseDuration(conf.BatchWait)
+	if err != nil {
+		log.Fatalf("parse batchWait error: %v", err)
+	}
+	conf.BatchWaitDuration = duration
 }
 
 func checkFile(file *File) {

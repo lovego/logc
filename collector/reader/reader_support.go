@@ -22,7 +22,7 @@ func (r *Reader) readLine() ([]byte, error) {
 	return line, err
 }
 
-func (r *Reader) parseRow(line []byte) map[string]interface{} {
+func (r *Reader) parseLine(line []byte) map[string]interface{} {
 	var row map[string]interface{}
 	if err := json.Unmarshal(line, &row); err == nil {
 		return row

@@ -20,6 +20,7 @@ defaults: &defaults
   rotateTime: "33 * * * * *"
   rotateCmd:  [ logrotate, logrotate.conf ]
   batchSize: 1024
+  batchWait: 1s     # how long to wait to full fill batchSize
   mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
   keepers: [ "houzhiliang@retail-tek.com" ]
 

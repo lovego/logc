@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
 type Config struct {
 	Name              string                 `yaml:"name"`
-	LogdAddr          string                 `yaml:"logdAddr"`
+	Elasticsearch     []string               `yaml:"elasticsearch"`
 	MergeJson         string                 `yaml:"-"`
 	MergeData         map[string]interface{} `yaml:"mergeData"`
 	BatchSize         int                    `yaml:"batchSize"`
@@ -31,21 +30,10 @@ type File struct {
 }
 
 func check(conf *Config) {
-	checkLogdAddress(conf)
 	checkMergeData(conf)
 	checkBatchWait(conf)
 	for _, file := range conf.Files {
 		checkFile(file)
-	}
-}
-
-func checkLogdAddress(conf *Config) {
-	addr := conf.LogdAddr
-	if addr == `` {
-		log.Fatal(`logd address required.`)
-	}
-	if !strings.HasPrefix(addr, `http://`) && !strings.HasPrefix(addr, `https://`) {
-		conf.LogdAddr = `http://` + addr
 	}
 }
 

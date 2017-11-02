@@ -1,14 +1,20 @@
 dev:
-  logdAddr: logd.dev
+  elasticsearch:
+    - http://log-es.wumart.com/logd-dev
   <<: *defaults
 demo:
-  logdAddr: logd.demo
+  elasticsearch:
+    - http://log-es.wumart.com/logd-demo
   <<: *defaults
 qa:
-  logdAddr: logd.qa
+  elasticsearch:
+    - http://192.168.202.51:9200/logd-qa
+    - http://192.168.202.52:9200/logd-qa
   <<: *defaults
 production:
-  logdAddr: logd.com
+  elasticsearch:
+    - http://192.168.202.51:9200/logd
+    - http://192.168.202.52:9200/logd
   <<: *defaults
 
 defaults: &defaults
@@ -22,7 +28,7 @@ defaults: &defaults
   batchSize: 1024
   batchWait: 1s     # how long to wait to full fill batchSize
   mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
-  keepers: [ "houzhiliang@retail-tek.com" ]
+  keepers: [ "hengchen.liao@dmall.com" ]
 
 mapping: &mapping
   at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }

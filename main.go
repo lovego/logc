@@ -21,8 +21,8 @@ import (
 func main() {
 	conf := config.Get()
 	logpkg.Printf(
-		"logc starting. (logd: %s, merge: %v)\n",
-		conf.LogdAddr, conf.MergeData,
+		"logc starting. (log-es: %v, merge: %v)\n",
+		conf.Elasticsearch, conf.MergeData,
 	)
 
 	theAlarm := getAlarm(conf.Name, conf.Mailer, conf.Keepers)
@@ -32,7 +32,7 @@ func main() {
 	collector.SetLogger(log)
 	reader.SetBatch(conf.BatchSize, conf.BatchWaitDuration)
 
-	pusher.CreateMappings(conf.LogdAddr, conf.Files, log)
+	pusher.CreateMappings(conf.Elasticsearch, conf.Files, log)
 	startRotate(conf.RotateTime, conf.RotateCmd, log)
 
 	watchFiles(conf)
@@ -42,7 +42,7 @@ func watchFiles(conf config.Config) {
 	files := make(map[string]func() watch.Collector)
 	for _, file := range conf.Files {
 		files[file.Path] = collectorGetter(
-			file.Path, pusher.NewGetter(conf.LogdAddr, file.Org, file.Name, conf.MergeJson),
+			file.Path, pusher.NewGetter(conf.Elasticsearch, file.Org, file.Name, conf.MergeJson),
 		)
 	}
 	watch.Watch(files)

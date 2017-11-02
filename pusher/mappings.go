@@ -1,45 +1,43 @@
 package pusher
 
 import (
-	"encoding/json"
-	"net/url"
+	"net/http"
 
 	"github.com/lovego/logc/config"
+	"github.com/lovego/xiaomei/utils/elastic"
 	"github.com/lovego/xiaomei/utils/httputil"
 	"github.com/lovego/xiaomei/utils/logger"
 )
 
-func CreateMappings(logdAddr string, filesAry []*config.File, log *logger.Logger) {
-	mappings := make(map[string][]map[string]interface{})
+type File struct {
+	Name    string                            `yaml:"name"`
+	Mapping map[string]map[string]interface{} `yaml:"mapping"`
+}
+
+var dataEs *elastic.ES
+
+func CreateMappings(esAddrs []string, filesAry []*config.File, log *logger.Logger) {
+	if dataEs == nil {
+		dataEs = elastic.New2(&httputil.Client{Client: http.DefaultClient}, esAddrs...)
+	}
+	mappings := make(map[string][]File)
 	for _, file := range filesAry {
 		org := file.Org
 		if mappings[org] == nil {
-			mappings[org] = []map[string]interface{}{}
+			mappings[org] = []File{}
 		}
-		mappings[org] = append(mappings[org], map[string]interface{}{
-			`name`: file.Name, `mapping`: file.Mapping,
-		})
+		mappings[org] = append(mappings[org], File{file.Name, file.Mapping})
 	}
-	for org, filesMapping := range mappings {
-		createMappings(logdAddr, org, filesMapping, log)
-	}
-}
-
-func createMappings(logdAddr, org string, files []map[string]interface{}, log *logger.Logger) {
-	filesJson, err := json.Marshal(files)
-	if err != nil {
-		log.Fatal("marshal mappings error: ", err)
-	}
-	query := url.Values{}
-	query.Set(`org`, org)
-	createUrl := logdAddr + `/org-files?` + query.Encode()
-	resp := struct {
-		Code, Message string
-	}{}
-	if err := httputil.PostJson(createUrl, nil, filesJson, &resp); err != nil {
-		log.Fatalf("create files error: %+v\n", err)
-	}
-	if resp.Code != `ok` {
-		log.Fatalf("create files failed: %+v\n", resp)
+	for org, files := range mappings {
+		for _, file := range files {
+			if err := dataEs.Ensure(`-`+org, nil); err != nil {
+				log.Fatalf("create files error: %+v\n", err)
+			}
+			if err := dataEs.Put(`-`+org+`/_mapping/`+file.Name, map[string]interface{}{
+				`properties`: file.Mapping,
+			}, nil); err != nil {
+				log.Fatalf("create files error: %+v\n", err)
+			}
+		}
 	}
 }

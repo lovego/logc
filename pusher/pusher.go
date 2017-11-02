@@ -3,10 +3,10 @@ package pusher
 import (
 	"encoding/json"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/lovego/logc/collector"
+	"github.com/lovego/xiaomei/utils/elastic"
 	"github.com/lovego/xiaomei/utils/httputil"
 	"github.com/lovego/xiaomei/utils/logger"
 )
@@ -14,40 +14,34 @@ import (
 var httpClient = &httputil.Client{Client: http.DefaultClient}
 
 type Getter struct {
-	pushUrl string
+	org       string
+	file      string
+	mergeJson string
 }
 
-func NewGetter(addr, org, file, mergeJson string) collector.PusherGetter {
-	query := url.Values{}
-	query.Set(`org`, org)
-	query.Set(`file`, file)
-	if mergeJson != `` {
-		query.Set(`merge`, mergeJson)
+func NewGetter(esAddrs []string, org, file, mergeJson string) collector.PusherGetter {
+	if dataEs == nil {
+		dataEs = elastic.New2(&httputil.Client{Client: http.DefaultClient}, esAddrs...)
 	}
-	return &Getter{pushUrl: addr + `/logs-data?` + query.Encode()}
+	return &Getter{org, file, mergeJson}
 }
 
 func (g *Getter) Get(log *logger.Logger) collector.Pusher {
-	return &Pusher{pushUrl: g.pushUrl, logger: log}
+	return &Pusher{Getter: g, logger: log}
 }
 
 type Pusher struct {
-	pushUrl string
-	logger  *logger.Logger
+	*Getter
+	logger *logger.Logger
 }
 
 func (p *Pusher) Push(rows []map[string]interface{}) {
 	if len(rows) == 0 {
 		return
 	}
-	content, err := json.Marshal(rows)
-	if err != nil {
-		p.logger.Errorf("marshal rows error: %v\n", err)
-		return
-	}
 	const max = 10 * time.Minute
 	for interval := time.Second; ; {
-		if p.push(content) {
+		if p.push(rows) {
 			return
 		}
 		time.Sleep(interval)
@@ -60,20 +54,30 @@ func (p *Pusher) Push(rows []map[string]interface{}) {
 	}
 }
 
-func (p *Pusher) push(content []byte) bool {
-	result := struct {
-		Code    string `json:"code"`
-		Message string `json:"message"`
-	}{}
-
-	err := httpClient.PostJson(p.pushUrl, nil, content, &result)
-	if err != nil {
+func (p *Pusher) push(docs []map[string]interface{}) bool {
+	if p.mergeJson != `` {
+		var merge map[string]interface{}
+		if err := json.Unmarshal([]byte(p.mergeJson), &merge); err != nil {
+			p.logger.Error("push data error: ", err)
+			return false
+		}
+		for _, doc := range docs {
+			for k, v := range merge {
+				doc[k] = v
+			}
+		}
+	}
+	if err := dataEs.BulkCreate(`-`+p.org+`/`+p.file, convertDocs(docs)); err != nil {
 		p.logger.Error("push data error: ", err)
 		return false
 	}
-	if result.Code != `ok` {
-		p.logger.Errorf("push data failed: %+v", result)
-		return false
-	}
 	return true
+}
+
+func convertDocs(docs []map[string]interface{}) [][2]interface{} {
+	data := [][2]interface{}{}
+	for _, doc := range docs {
+		data = append(data, [2]interface{}{nil, doc})
+	}
+	return data
 }

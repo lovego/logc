@@ -42,7 +42,7 @@ func watchFiles(conf config.Config) {
 	files := make(map[string]func() watch.Collector)
 	for _, file := range conf.Files {
 		files[file.Path] = collectorGetter(
-			file.Path, pusher.NewGetter(conf.Elasticsearch, file.Org, file.Name, conf.MergeJson),
+			file.Path, pusher.NewGetter(conf.Elasticsearch, file.Index, file.Type, conf.MergeJson),
 		)
 	}
 	watch.Watch(files)

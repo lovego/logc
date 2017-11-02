@@ -23,9 +23,9 @@ type Config struct {
 }
 
 type File struct {
-	Org     string                            `yaml:"org"`
-	Name    string                            `yaml:"name"`
 	Path    string                            `yaml:"path"`
+	Index   string                            `yaml:"index"`
+	Type    string                            `yaml:"type"`
 	Mapping map[string]map[string]interface{} `yaml:"mapping"`
 }
 
@@ -60,11 +60,11 @@ func checkBatchWait(conf *Config) {
 }
 
 func checkFile(file *File) {
-	if file.Org == `` {
-		log.Fatalf("org missing for file: %+v", file)
+	if file.Index == `` {
+		log.Fatalf("index missing for file: %+v", file)
 	}
-	if file.Name == `` {
-		log.Fatalf("name missing for file: %+v", file)
+	if file.Type == `` {
+		log.Fatalf("type missing for file: %+v", file)
 	}
 	if file.Path == `` {
 		log.Fatalf("path missing for file: %+v", file)

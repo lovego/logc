@@ -10,7 +10,7 @@ import (
 )
 
 type File struct {
-	Name    string                            `yaml:"name"`
+	Type    string                            `yaml:"name"`
 	Mapping map[string]map[string]interface{} `yaml:"mapping"`
 }
 
@@ -22,18 +22,18 @@ func CreateMappings(esAddrs []string, filesAry []*config.File, log *logger.Logge
 	}
 	mappings := make(map[string][]File)
 	for _, file := range filesAry {
-		org := file.Org
-		if mappings[org] == nil {
-			mappings[org] = []File{}
+		index := file.Index
+		if mappings[index] == nil {
+			mappings[index] = []File{}
 		}
-		mappings[org] = append(mappings[org], File{file.Name, file.Mapping})
+		mappings[index] = append(mappings[index], File{file.Type, file.Mapping})
 	}
-	for org, files := range mappings {
+	for index, files := range mappings {
 		for _, file := range files {
-			if err := dataEs.Ensure(`-`+org, nil); err != nil {
+			if err := dataEs.Ensure(`-`+index, nil); err != nil {
 				log.Fatalf("create files error: %+v\n", err)
 			}
-			if err := dataEs.Put(`-`+org+`/_mapping/`+file.Name, map[string]interface{}{
+			if err := dataEs.Put(`-`+index+`/_mapping/`+file.Type, map[string]interface{}{
 				`properties`: file.Mapping,
 			}, nil); err != nil {
 				log.Fatalf("create files error: %+v\n", err)

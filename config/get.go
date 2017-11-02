@@ -43,10 +43,13 @@ func parse(configFile string) Config {
 	if err != nil {
 		log.Fatal(err)
 	}
-	envConfs := map[string]Config{}
-	if err := yaml.Unmarshal(content, &envConfs); err != nil {
+	confs := struct {
+		Envs map[string]Config `yaml:"envs"`
+	}{}
+	if err := yaml.Unmarshal(content, &confs); err != nil {
 		log.Fatal(err)
 	}
+	envConfs := confs.Envs
 	for _, envConf := range envConfs {
 		for _, file := range envConf.Files {
 			cleanFileMapping(file.Mapping)

@@ -1,28 +1,29 @@
-dev:
-  elasticsearch:
-    - http://log-es.wumart.com/logd-dev
-  <<: *defaults
-demo:
-  elasticsearch:
-    - http://log-es.wumart.com/logd-demo
-  <<: *defaults
-qa:
-  elasticsearch:
-    - http://192.168.202.51:9200/logd-qa
-    - http://192.168.202.52:9200/logd-qa
-  <<: *defaults
-production:
-  elasticsearch:
-    - http://192.168.202.51:9200/logd
-    - http://192.168.202.52:9200/logd
-  <<: *defaults
+envs:
+  dev:
+    elasticsearch:
+      - http://log-es.wumart.com/logd-dev
+    <<: *defaults
+  demo:
+    elasticsearch:
+      - http://log-es.wumart.com/logd-demo
+    <<: *defaults
+  qa:
+    elasticsearch:
+      - http://192.168.202.51:9200/logd-qa
+      - http://192.168.202.52:9200/logd-qa
+    <<: *defaults
+  production:
+    elasticsearch:
+      - http://192.168.202.51:9200/logd
+      - http://192.168.202.52:9200/logd
+    <<: *defaults
 
 defaults: &defaults
   name: test
   files:
-    - { org: test-org, name: app-log, path: app.log, mapping: *mapping }
-    - { org: test-org, name: app-err, path: app.err, mapping: *mapping }
-    - { org: test-consume, name: consume-log, path: consume.log, mapping: *mappingConsume }
+    - { path: app.log, index: test-org, type: app-log, mapping: *mapping }
+    - { path: app.err, index: test-org, type: app-err, mapping: *mapping }
+    - { path: consume.log, index: test-consume, type: consume-log, mapping: *mappingConsume }
   rotateTime: "33 * * * * *"
   rotateCmd:  [ logrotate, logrotate.conf ]
   batchSize: 1024

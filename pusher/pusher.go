@@ -14,16 +14,16 @@ import (
 var httpClient = &httputil.Client{Client: http.DefaultClient}
 
 type Getter struct {
-	org       string
-	file      string
+	esIndex   string
+	esType    string
 	mergeJson string
 }
 
-func NewGetter(esAddrs []string, org, file, mergeJson string) collector.PusherGetter {
+func NewGetter(esAddrs []string, esIndex, esType, mergeJson string) collector.PusherGetter {
 	if dataEs == nil {
 		dataEs = elastic.New2(&httputil.Client{Client: http.DefaultClient}, esAddrs...)
 	}
-	return &Getter{org, file, mergeJson}
+	return &Getter{esIndex, esType, mergeJson}
 }
 
 func (g *Getter) Get(log *logger.Logger) collector.Pusher {
@@ -67,7 +67,7 @@ func (p *Pusher) push(docs []map[string]interface{}) bool {
 			}
 		}
 	}
-	if err := dataEs.BulkCreate(`-`+p.org+`/`+p.file, convertDocs(docs)); err != nil {
+	if err := dataEs.BulkCreate(p.esIndex+`/`+p.esType, convertDocs(docs)); err != nil {
 		p.logger.Error("push data error: ", err)
 		return false
 	}

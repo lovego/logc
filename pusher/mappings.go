@@ -30,10 +30,10 @@ func CreateMappings(esAddrs []string, filesAry []*config.File, log *logger.Logge
 	}
 	for index, files := range mappings {
 		for _, file := range files {
-			if err := dataEs.Ensure(`-`+index, nil); err != nil {
+			if err := dataEs.Ensure(index, nil); err != nil {
 				log.Fatalf("create files error: %+v\n", err)
 			}
-			if err := dataEs.Put(`-`+index+`/_mapping/`+file.Type, map[string]interface{}{
+			if err := dataEs.Put(index+`/_mapping/`+file.Type, map[string]interface{}{
 				`properties`: file.Mapping,
 			}, nil); err != nil {
 				log.Fatalf("create files error: %+v\n", err)

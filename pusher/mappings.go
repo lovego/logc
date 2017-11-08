@@ -1,43 +1,72 @@
 package pusher
 
 import (
-	"net/http"
+	"fmt"
+	"net/url"
+	"strings"
 
-	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/elastic"
 	"github.com/lovego/xiaomei/utils/httputil"
-	"github.com/lovego/xiaomei/utils/logger"
 )
-
-type File struct {
-	Type    string                            `yaml:"name"`
-	Mapping map[string]map[string]interface{} `yaml:"mapping"`
-}
 
 var dataEs *elastic.ES
 
-func CreateMappings(esAddrs []string, filesAry []*config.File, log *logger.Logger) {
-	if dataEs == nil {
-		dataEs = elastic.New2(&httputil.Client{Client: http.DefaultClient}, esAddrs...)
+func (p *Pusher) ensureIndex(esIndex string) {
+	if err := dataEs.Ensure(esIndex, nil); err != nil {
+		p.logger.Fatalf("create files error: %+v\n", err)
 	}
-	mappings := make(map[string][]File)
-	for _, file := range filesAry {
-		index := file.Index
-		if mappings[index] == nil {
-			mappings[index] = []File{}
-		}
-		mappings[index] = append(mappings[index], File{file.Type, file.Mapping})
+	if err := dataEs.Put(esIndex+`/_mapping/`+p.Type, map[string]interface{}{
+		`properties`: p.Mapping,
+	}, nil); err != nil {
+		p.logger.Fatalf("create files error: %+v\n", err)
 	}
-	for index, files := range mappings {
-		for _, file := range files {
-			if err := dataEs.Ensure(index, nil); err != nil {
-				log.Fatalf("create files error: %+v\n", err)
-			}
-			if err := dataEs.Put(index+`/_mapping/`+file.Type, map[string]interface{}{
-				`properties`: file.Mapping,
-			}, nil); err != nil {
-				log.Fatalf("create files error: %+v\n", err)
-			}
-		}
+	p.delHistory()
+}
+
+// http://log-es.wumart.com/_cat/indices/logc-dev-*?h=index&s=index:desc
+func (p *Pusher) delHistory() {
+	esAddr := dataEs.BaseAddrs[0]
+	u, err := url.Parse(esAddr)
+	if err != nil {
+		p.logger.Errorf("parse es addr %s error: %+v\n", esAddr, err)
+		return
+	}
+	for _, esIndex := range p.indicesToDel(u) {
+		p.deleteIndex(u.Host, u.Scheme, esIndex)
+	}
+}
+
+func (p *Pusher) indicesToDel(u *url.URL) []string {
+	// u.path: /logc-dev-
+	u.Path = fmt.Sprintf("/_cat/indices%s%s*", u.Path, p.Index)
+	u.RawQuery = `h=index&s=index:desc`
+	uri := u.String()
+	res, err := httputil.Get(uri, nil, nil)
+	if err != nil {
+		p.logger.Errorf("get es history index %s error: %+v\n", uri, err)
+		return nil
+	}
+	b, err := res.GetBody()
+	if err != nil {
+		p.logger.Errorf("get es history index error: ", err)
+		return nil
+	}
+	esIndices := strings.Split(string(b), "\n")
+	if len(esIndices) == 0 {
+		p.logger.Error("no esIndices for ", uri)
+		return nil
+	}
+	if len(esIndices) > p.Keep {
+		return esIndices[p.Keep:]
+	}
+	return nil
+}
+
+func (p *Pusher) deleteIndex(host, scheme, esIndex string) {
+	u := url.URL{Host: host, Scheme: scheme, Path: esIndex}
+	uri := u.String()
+	_, err := httputil.Delete(uri, nil, nil)
+	if err != nil {
+		p.logger.Errorf("delete es index %s error: %+v\n", uri, err)
 	}
 }

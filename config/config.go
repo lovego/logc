@@ -23,10 +23,14 @@ type Config struct {
 }
 
 type File struct {
-	Path    string                            `yaml:"path"`
-	Index   string                            `yaml:"index"`
-	Type    string                            `yaml:"type"`
-	Mapping map[string]map[string]interface{} `yaml:"mapping"`
+	Path      string                            `yaml:"path"`
+	Index     string                            `yaml:"index"`
+	Type      string                            `yaml:"type"`
+	Mapping   map[string]map[string]interface{} `yaml:"mapping"`
+	TimeField string                            `yaml:"timeField"`
+	Parse     string                            `yaml:"parseLayout"`
+	Layout    string                            `yaml:"layout"`
+	Keep      int                               `yaml:"keep"`
 }
 
 func check(conf *Config) {
@@ -66,9 +70,21 @@ func checkFile(file *File) {
 	if file.Type == `` {
 		log.Fatalf("type missing for file: %+v", file)
 	}
+	if file.TimeField == `` {
+		log.Fatalf("time field missing for file: %+v", file)
+	}
 	if file.Path == `` {
 		log.Fatalf("path missing for file: %+v", file)
 	} else {
 		file.Path = filepath.Clean(file.Path)
+	}
+	if file.Parse == `` {
+		file.Parse = time.RFC3339
+	}
+	if file.Layout == `` {
+		file.Layout = `2006-01`
+	}
+	if file.Keep == 0 {
+		file.Keep = 3
 	}
 }

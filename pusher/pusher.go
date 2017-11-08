@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/lovego/logc/collector"
+	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/elastic"
 	"github.com/lovego/xiaomei/utils/httputil"
 	"github.com/lovego/xiaomei/utils/logger"
@@ -14,16 +15,16 @@ import (
 var httpClient = &httputil.Client{Client: http.DefaultClient}
 
 type Getter struct {
-	esIndex   string
-	esType    string
+	*config.File
+
 	mergeJson string
 }
 
-func NewGetter(esAddrs []string, esIndex, esType, mergeJson string) collector.PusherGetter {
+func NewGetter(esAddrs []string, file *config.File, mergeJson string) collector.PusherGetter {
 	if dataEs == nil {
 		dataEs = elastic.New2(&httputil.Client{Client: http.DefaultClient}, esAddrs...)
 	}
-	return &Getter{esIndex, esType, mergeJson}
+	return &Getter{file, mergeJson}
 }
 
 func (g *Getter) Get(log *logger.Logger) collector.Pusher {
@@ -32,21 +33,30 @@ func (g *Getter) Get(log *logger.Logger) collector.Pusher {
 
 type Pusher struct {
 	*Getter
+
 	logger *logger.Logger
 }
+
+var ensuredKeys = make(map[string]bool)
 
 func (p *Pusher) Push(rows []map[string]interface{}) {
 	if len(rows) == 0 {
 		return
 	}
 	const max = 10 * time.Minute
-	for interval := time.Second; ; {
-		if p.push(rows) {
-			return
+	data := p.groupRows(rows)
+	for esIndex, d := range data {
+		if !ensuredKeys[esIndex] {
+			p.ensureIndex(esIndex)
+			ensuredKeys[esIndex] = true
 		}
-		time.Sleep(interval)
-		if interval < max {
-			interval *= 2
+		p.mergeJsonData(d)
+		docs := convertDocs(d)
+		for interval := time.Second; ; interval *= 2 {
+			if docs = p.push(esIndex, docs); len(docs) == 0 {
+				break
+			}
+			time.Sleep(interval)
 			if interval > max {
 				interval = max
 			}
@@ -54,12 +64,22 @@ func (p *Pusher) Push(rows []map[string]interface{}) {
 	}
 }
 
-func (p *Pusher) push(docs []map[string]interface{}) bool {
+func (p *Pusher) push(esIndex string, docs [][2]interface{}) [][2]interface{} {
+	if errs := dataEs.BulkCreate(esIndex+`/`+p.Type, docs); errs != nil {
+		if err, ok := errs.(elastic.BulkError); ok {
+			return err.FailedItems()
+		}
+		p.logger.Error("push err is not elastic.BulkError type, but %T", errs)
+	}
+	return nil
+}
+
+func (p *Pusher) mergeJsonData(docs []map[string]interface{}) {
 	if p.mergeJson != `` {
 		var merge map[string]interface{}
 		if err := json.Unmarshal([]byte(p.mergeJson), &merge); err != nil {
-			p.logger.Error("push data error: ", err)
-			return false
+			p.logger.Error("merge json unexpected err: ", err)
+			return
 		}
 		for _, doc := range docs {
 			for k, v := range merge {
@@ -67,11 +87,26 @@ func (p *Pusher) push(docs []map[string]interface{}) bool {
 			}
 		}
 	}
-	if err := dataEs.BulkCreate(p.esIndex+`/`+p.esType, convertDocs(docs)); err != nil {
-		p.logger.Error("push data error: ", err)
-		return false
+}
+
+func (p *Pusher) groupRows(rows []map[string]interface{}) map[string][]map[string]interface{} {
+	data := make(map[string][]map[string]interface{})
+	for _, row := range rows {
+		if value, ok := row[p.TimeField].(string); ok {
+			if at, err := time.Parse(p.Parse, value); err == nil {
+				esIndex := p.Index + `-` + at.Format(p.Layout)
+				if data[esIndex] == nil {
+					data[esIndex] = []map[string]interface{}{}
+				}
+				data[esIndex] = append(data[esIndex], row)
+			} else {
+				p.logger.Errorf("parse time field %s with layout %s error: %v", p.TimeField, p.Parse, err)
+			}
+		} else {
+			p.logger.Errorf("time field %s not string", p.TimeField)
+		}
 	}
-	return true
+	return data
 }
 
 func convertDocs(docs []map[string]interface{}) [][2]interface{} {

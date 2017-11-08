@@ -32,17 +32,17 @@ func main() {
 	collector.SetLogger(log)
 	reader.SetBatch(conf.BatchSize, conf.BatchWaitDuration)
 
-	pusher.CreateMappings(conf.Elasticsearch, conf.Files, log)
+	//pusher.CreateMappings(conf.Elasticsearch, conf.Files, log)
 	startRotate(conf.RotateTime, conf.RotateCmd, log)
 
-	watchFiles(conf)
+	watchFiles(conf, log)
 }
 
-func watchFiles(conf config.Config) {
+func watchFiles(conf config.Config, log *logger.Logger) {
 	files := make(map[string]func() watch.Collector)
 	for _, file := range conf.Files {
 		files[file.Path] = collectorGetter(
-			file.Path, pusher.NewGetter(conf.Elasticsearch, file.Index, file.Type, conf.MergeJson),
+			file.Path, pusher.NewGetter(conf.Elasticsearch, file, conf.MergeJson),
 		)
 	}
 	watch.Watch(files)

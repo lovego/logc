@@ -1,35 +1,38 @@
 envs:
   dev:
     elasticsearch:
-      - http://log-es.wumart.com/logd-dev
+      - http://log-es.wumart.com/logc-dev-
     <<: *defaults
   demo:
     elasticsearch:
-      - http://log-es.wumart.com/logd-demo
+      - http://log-es.wumart.com/logc-demo-
     <<: *defaults
   qa:
     elasticsearch:
-      - http://192.168.202.51:9200/logd-qa
-      - http://192.168.202.52:9200/logd-qa
+      - http://192.168.202.51:9200/logc-qa-
+      - http://192.168.202.52:9200/logc-qa-
     <<: *defaults
   production:
     elasticsearch:
-      - http://192.168.202.51:9200/logd
-      - http://192.168.202.52:9200/logd
+      - http://192.168.202.51:9200/logc-
+      - http://192.168.202.52:9200/logc-
     <<: *defaults
 
 defaults: &defaults
   name: test
   files:
-    - { path: app.log, index: test-org, type: app-log, mapping: *mapping }
-    - { path: app.err, index: test-org, type: app-err, mapping: *mapping }
-    - { path: consume.log, index: test-consume, type: consume-log, mapping: *mappingConsume }
-  rotateTime: "33 * * * * *"
+    #parseLayout: string,时间字段解析layout (default: RFC3339)
+    #layout: string,时间字段按layout格式作为es index存储 (default: 2006-01)
+    #keep: int,保留最近几个es index并删除历史es index (default: 3)
+    - { path: app.log, index: test-org, type: app-log, mapping: *mapping, timeField: at, parseLayout: "2006-01-02T15:04:05-0700", layout: 2006-01-02 }
+    - { path: app.err, index: test-org, type: app-err, mapping: *mapping, timeField: at, parseLayout: "2006-01-02T15:04:05-0700", layout: 2006-01 }
+    - { path: consume.log, index: test-consume, type: consume-log, mapping: *mappingConsume, timeField: at, layout: 2006-01, keep: 2 }
+  rotateTime: "33 8 1 * * *"
   rotateCmd:  [ logrotate, logrotate.conf ]
   batchSize: 1024
   batchWait: 1s     # how long to wait to full fill batchSize
   mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
-  keepers: [ "hengchen.liao@dmall.com" ]
+  keepers: [  ]
 
 mapping: &mapping
   at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }

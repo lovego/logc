@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/lovego/xiaomei/utils/elastic"
 	"github.com/lovego/xiaomei/utils/httputil"
@@ -38,6 +39,7 @@ func (p *Pusher) delHistory() {
 
 func (p *Pusher) indicesToDel(u *url.URL) []string {
 	// u.path: /logc-dev-
+	prefix := u.Path[1:]
 	u.Path = fmt.Sprintf("/_cat/indices%s%s*", u.Path, p.Index)
 	u.RawQuery = `h=index&s=index:desc`
 	uri := u.String()
@@ -52,6 +54,7 @@ func (p *Pusher) indicesToDel(u *url.URL) []string {
 		return nil
 	}
 	esIndices := strings.Split(string(b), "\n")
+	esIndices = filterIndices(esIndices, prefix, p.Index, p.Layout)
 	if len(esIndices) == 0 {
 		p.logger.Error("no esIndices for ", uri)
 		return nil
@@ -69,4 +72,17 @@ func (p *Pusher) deleteIndex(host, scheme, esIndex string) {
 	if err != nil {
 		p.logger.Errorf("delete es index %s error: %+v\n", uri, err)
 	}
+}
+
+// prefix: logc-dev-
+func filterIndices(esIndices []string, prefix, index, layout string) []string {
+	result := []string{}
+	for _, esIndex := range esIndices {
+		remain := strings.Replace(esIndex, prefix+index+`-`, ``, -1)
+		_, err := time.Parse(layout, remain)
+		if err == nil {
+			result = append(result, esIndex)
+		}
+	}
+	return result
 }

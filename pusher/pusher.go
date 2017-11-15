@@ -18,14 +18,16 @@ type indexRows struct {
 	rows  []map[string]interface{}
 }
 
-func (p *Pusher) Push(rows []map[string]interface{}) {
+func (p *Pusher) Push(rows []map[string]interface{}) bool {
 	if len(rows) == 0 {
-		return
+		return true
 	}
 	if p.file.IsTimeSeriesIndex() {
 		for _, indexData := range p.getIndicesRows(rows) {
 			if indexData.index != p.currentIndex {
-				p.ensureIndex(indexData.index)
+				if !p.ensureIndex(indexData.index) {
+					return false
+				}
 				p.currentIndex = indexData.index
 			}
 			p.push(indexData.index, indexData.rows)
@@ -33,6 +35,7 @@ func (p *Pusher) Push(rows []map[string]interface{}) {
 	} else {
 		p.push(p.file.Index, rows)
 	}
+	return true
 }
 
 func (p *Pusher) push(index string, rows []map[string]interface{}) {

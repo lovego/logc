@@ -12,10 +12,13 @@ import (
 )
 
 var conf = config.Get()
-var elasticSearch = elastic.New2(&httputil.Client{Client: http.DefaultClient}, conf.ElasticSearch...)
+var elasticSearch = elastic.New2(
+	&httputil.Client{Client: http.DefaultClient}, conf.ElasticSearch...,
+)
 
-func (p *Pusher) bulkCreate(esIndex string, docs [][2]interface{}) [][2]interface{} {
-	if errs := elasticSearch.BulkCreate(esIndex+`/`+p.Type, docs); errs != nil {
+// TODO: more errors retry
+func (p *Pusher) bulkCreate(index string, docs [][2]interface{}) [][2]interface{} {
+	if errs := elasticSearch.BulkCreate(index+`/`+p.file.Type, docs); errs != nil {
 		if err, ok := errs.(elastic.BulkError); ok {
 			return err.FailedItems()
 		}
@@ -24,34 +27,37 @@ func (p *Pusher) bulkCreate(esIndex string, docs [][2]interface{}) [][2]interfac
 	return nil
 }
 
-func (p *Pusher) ensureIndex(esIndex string) {
-	if err := elasticSearch.Ensure(esIndex, nil); err != nil {
-		p.logger.Fatalf("create files error: %+v\n", err)
+func (p *Pusher) ensureIndex(index string) bool {
+	if err := elasticSearch.Ensure(index, nil); err != nil {
+		p.logger.Errorf("ensure index %s error: %+v\n", index, err)
+		return false
 	}
-	if err := elasticSearch.Put(esIndex+`/_mapping/`+p.Type, map[string]interface{}{
-		`properties`: p.Mapping,
+	if err := elasticSearch.Put(index+`/_mapping/`+p.file.Type, map[string]interface{}{
+		`properties`: p.file.Mapping,
 	}, nil); err != nil {
-		p.logger.Fatalf("create files error: %+v\n", err)
+		p.logger.Errorf("put mapping %s/%s error: %+v\n", index, p.file.Type, err)
+		return false
 	}
-	p.delHistory()
+	p.deleteObsolete()
+	return true
 }
 
 // http://log-es.wumart.com/_cat/indices/logc-dev-*?h=index&s=index:desc
-func (p *Pusher) delHistory() {
+func (p *Pusher) deleteObsolete() {
 	esAddr := elasticSearch.BaseAddrs[0]
 	u, err := url.Parse(esAddr)
 	if err != nil {
 		p.logger.Errorf("parse es addr %s error: %+v\n", esAddr, err)
 		return
 	}
-	for _, esIndex := range p.indicesToDel(u) {
-		p.deleteIndex(u.Host, u.Scheme, esIndex)
+	for _, index := range p.getObsoleteIndices(u) {
+		p.deleteIndex(u.Host, u.Scheme, index)
 	}
 }
 
-func (p *Pusher) indicesToDel(u *url.URL) []string {
+func (p *Pusher) getObsoleteIndices(u *url.URL) []string {
 	// u.path: /logc-dev-
-	u.Path = fmt.Sprintf("/_cat/indices%s%s*", u.Path, p.Index)
+	u.Path = fmt.Sprintf("/_cat/indices%s%s*", u.Path, p.file.Index)
 	u.RawQuery = `h=index&s=index:desc`
 	uri := u.String()
 	res, err := httputil.Get(uri, nil, nil)
@@ -69,14 +75,14 @@ func (p *Pusher) indicesToDel(u *url.URL) []string {
 		p.logger.Error("no esIndices for ", uri)
 		return nil
 	}
-	if len(esIndices) > p.Keep {
-		return esIndices[p.Keep:]
+	if len(esIndices) > p.file.IndexKeep {
+		return esIndices[p.file.IndexKeep:]
 	}
 	return nil
 }
 
-func (p *Pusher) deleteIndex(host, scheme, esIndex string) {
-	u := url.URL{Host: host, Scheme: scheme, Path: esIndex}
+func (p *Pusher) deleteIndex(host, scheme, index string) {
+	u := url.URL{Host: host, Scheme: scheme, Path: index}
 	uri := u.String()
 	_, err := httputil.Delete(uri, nil, nil)
 	if err != nil {

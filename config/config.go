@@ -1,20 +1,17 @@
 package config
 
 import (
-	"encoding/json"
 	"log"
-	"path/filepath"
 	"time"
 )
 
 type Config struct {
 	Name              string                 `yaml:"name"`
-	Elasticsearch     []string               `yaml:"elasticsearch"`
-	MergeJson         string                 `yaml:"-"`
+	ElasticSearch     []string               `yaml:"elasticsearch"`
 	MergeData         map[string]interface{} `yaml:"mergeData"`
-	BatchSize         int                    `yaml:"batchSize"`
+	BatchSize         int                    `yaml:"batchSize"` // <= 0 means unlimted
 	BatchWait         string                 `yaml:"batchWait"`
-	BatchWaitDuration time.Duration          `yaml:"-"`
+	BatchWaitDuration time.Duration          `yaml:"-"` // <= 0 means don't wait
 	RotateTime        string                 `yaml:"rotateTime"`
 	RotateCmd         []string               `yaml:"rotateCmd"`
 	Mailer            string                 `yaml:"mailer"`
@@ -22,36 +19,17 @@ type Config struct {
 	Files             []*File                `yaml:"files"`
 }
 
-type File struct {
-	Path      string                            `yaml:"path"`
-	Index     string                            `yaml:"index"`
-	Type      string                            `yaml:"type"`
-	Mapping   map[string]map[string]interface{} `yaml:"mapping"`
-	TimeField string                            `yaml:"timeField"`
-	Parse     string                            `yaml:"parseLayout"`
-	Layout    string                            `yaml:"layout"`
-	Keep      int                               `yaml:"keep"`
-}
-
-func check(conf *Config) {
-	checkMergeData(conf)
-	checkBatchWait(conf)
+func (conf *Config) check() {
+	if conf.Name == `` {
+		log.Fatal("config: empty name")
+	}
+	conf.checkBatchWait()
 	for _, file := range conf.Files {
-		checkFile(file)
+		file.check()
 	}
 }
 
-func checkMergeData(conf *Config) {
-	if len(conf.MergeData) > 0 {
-		if buf, err := json.Marshal(conf.MergeData); err != nil {
-			log.Fatalf("marshal merge data: %v", err)
-		} else {
-			conf.MergeJson = string(buf)
-		}
-	}
-}
-
-func checkBatchWait(conf *Config) {
+func (conf *Config) checkBatchWait() {
 	if conf.BatchWait == `` {
 		conf.BatchWaitDuration = -1
 		return
@@ -61,30 +39,4 @@ func checkBatchWait(conf *Config) {
 		log.Fatalf("parse batchWait error: %v", err)
 	}
 	conf.BatchWaitDuration = duration
-}
-
-func checkFile(file *File) {
-	if file.Index == `` {
-		log.Fatalf("index missing for file: %+v", file)
-	}
-	if file.Type == `` {
-		log.Fatalf("type missing for file: %+v", file)
-	}
-	if file.TimeField == `` {
-		log.Fatalf("time field missing for file: %+v", file)
-	}
-	if file.Path == `` {
-		log.Fatalf("path missing for file: %+v", file)
-	} else {
-		file.Path = filepath.Clean(file.Path)
-	}
-	if file.Parse == `` {
-		file.Parse = time.RFC3339
-	}
-	if file.Layout == `` {
-		file.Layout = `2006-01`
-	}
-	if file.Keep == 0 {
-		file.Keep = 3
-	}
 }

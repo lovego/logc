@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	logpkg "log"
-	"os"
 	"os/exec"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/lovego/logc/watch"
 	"github.com/lovego/xiaomei/utils/alarm"
 	"github.com/lovego/xiaomei/utils/logger"
-	"github.com/lovego/xiaomei/utils/mailer"
 	"github.com/robfig/cron"
 )
 
@@ -22,17 +20,13 @@ func main() {
 	conf := config.Get()
 	logpkg.Printf(
 		"logc starting. (log-es: %v, merge: %v)\n",
-		conf.Elasticsearch, conf.MergeData,
+		conf.ElasticSearch, conf.MergeData,
 	)
-
-	theAlarm := getAlarm(conf.Name, conf.Mailer, conf.Keepers)
-	log := logger.New(``, os.Stderr, theAlarm)
 
 	collector.SetAlarm(theAlarm)
 	collector.SetLogger(log)
 	reader.SetBatch(conf.BatchSize, conf.BatchWaitDuration)
 
-	//pusher.CreateMappings(conf.Elasticsearch, conf.Files, log)
 	startRotate(conf.RotateTime, conf.RotateCmd, log)
 
 	watchFiles(conf, log)
@@ -42,7 +36,7 @@ func watchFiles(conf config.Config, log *logger.Logger) {
 	files := make(map[string]func() watch.Collector)
 	for _, file := range conf.Files {
 		files[file.Path] = collectorGetter(
-			file.Path, pusher.NewGetter(conf.Elasticsearch, file, conf.MergeJson),
+			file.Path, pusher.NewGetter(conf.ElasticSearch, file, conf.MergeJson),
 		)
 	}
 	watch.Watch(files)
@@ -78,19 +72,4 @@ func startRotate(timeSpec string, cmd []string, log *logger.Logger) {
 		log.Fatal(err)
 	}
 	go c.Start()
-}
-
-func getAlarm(name, mailerUrl string, keepers []string) *alarm.Alarm {
-	m, err := mailer.New(mailerUrl)
-	if err != nil {
-		logpkg.Panic(err)
-	}
-	env := os.Getenv(`GOENV`)
-	if env == `` {
-		env = `dev`
-	}
-	return alarm.New(
-		name+`_`+env+`_logc`, alarm.MailSender{Receivers: keepers, Mailer: m},
-		0, 5*time.Second, 30*time.Second,
-	)
 }

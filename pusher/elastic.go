@@ -2,20 +2,33 @@ package pusher
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/elastic"
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-var dataEs *elastic.ES
+var conf = config.Get()
+var elasticSearch = elastic.New2(&httputil.Client{Client: http.DefaultClient}, conf.ElasticSearch...)
+
+func (p *Pusher) bulkCreate(esIndex string, docs [][2]interface{}) [][2]interface{} {
+	if errs := elasticSearch.BulkCreate(esIndex+`/`+p.Type, docs); errs != nil {
+		if err, ok := errs.(elastic.BulkError); ok {
+			return err.FailedItems()
+		}
+		p.logger.Error("push err is not elastic.BulkError type, but %T", errs)
+	}
+	return nil
+}
 
 func (p *Pusher) ensureIndex(esIndex string) {
-	if err := dataEs.Ensure(esIndex, nil); err != nil {
+	if err := elasticSearch.Ensure(esIndex, nil); err != nil {
 		p.logger.Fatalf("create files error: %+v\n", err)
 	}
-	if err := dataEs.Put(esIndex+`/_mapping/`+p.Type, map[string]interface{}{
+	if err := elasticSearch.Put(esIndex+`/_mapping/`+p.Type, map[string]interface{}{
 		`properties`: p.Mapping,
 	}, nil); err != nil {
 		p.logger.Fatalf("create files error: %+v\n", err)
@@ -25,7 +38,7 @@ func (p *Pusher) ensureIndex(esIndex string) {
 
 // http://log-es.wumart.com/_cat/indices/logc-dev-*?h=index&s=index:desc
 func (p *Pusher) delHistory() {
-	esAddr := dataEs.BaseAddrs[0]
+	esAddr := elasticSearch.BaseAddrs[0]
 	u, err := url.Parse(esAddr)
 	if err != nil {
 		p.logger.Errorf("parse es addr %s error: %+v\n", esAddr, err)

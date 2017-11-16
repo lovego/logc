@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/logger"
 )
 
@@ -32,12 +33,13 @@ func New(file *os.File, offsetPath string, logger *logger.Logger) *Reader {
 var batchSize = 100 * 1024
 var batchWait = time.Second
 
-func SetBatch(size int, wait time.Duration) {
-	if size > 0 {
-		batchSize = size
+func init() {
+	conf := config.Get()
+	if conf.BatchSize > 0 {
+		batchSize = conf.BatchSize
 	}
-	if wait >= 0 {
-		batchWait = wait
+	if conf.BatchWaitDuration >= 0 {
+		batchWait = conf.BatchWaitDuration
 	}
 }
 

@@ -21,16 +21,40 @@ envs:
 defaults: &defaults
   name: test
   files:
-    #parseLayout: string,时间字段解析layout (default: RFC3339)
-    #layout: string,时间字段按layout格式作为es index存储 (default: 2006-01)
-    #keep: int,保留最近几个es index并删除历史es index (default: 3)
-    - { path: app.log, index: test-org, type: app-log, mapping: *mapping, timeField: at, parseLayout: "2006-01-02T15:04:05-0700", layout: 2006-01-02 }
-    - { path: app.err, index: test-org, type: app-err, mapping: *mapping, timeField: at, parseLayout: "2006-01-02T15:04:05-0700", layout: 2006-01 }
-    - { path: consume.log, index: test-consume, type: consume-log, mapping: *mappingConsume, timeField: at, layout: 2006-01, keep: 2 }
+    -
+      # file path, required, either relative or absolute is ok.
+      path: app.log
+
+      # index can be time series index or regular index.
+      # time series index, string between "<" and ">" acts as layout.
+      # see https://golang.org/pkg/time/#Parse for layout format.
+      # index doesn't contain "<" and ">" acts as a regular index.
+      index: app-<2006.01.02>
+
+      # the number of latest time series indices to keep. old indices will be deleted.
+      # effective only when "index" field is a time series index.
+      indexKeep: 3
+
+      type: app-log
+      mapping: *mapping
+      timeField: at
+      # layout to parse "timeField". (default: RFC3339)
+      timeFormat: "2006-01-02T15:04:05-0700"
+    - path: app.err
+      index: app-<2006.01.02>
+      type: app-err
+      mapping: *mapping
+      timeField: at
+    - path: consume.log
+      index: test-consume
+      type: consume-log
+      mapping: *mappingConsume
+      timeField: at
   rotateTime: "33 8 1 * * *"
   rotateCmd:  [ logrotate, logrotate.conf ]
   batchSize: 1024
-  batchWait: 1s     # how long to wait to full fill batchSize
+  # how long to wait to full fill batchSize
+  batchWait: 1s
   mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
   keepers: [  ]
 
@@ -49,6 +73,7 @@ mapping: &mapping
   agent: { type: text }
   proto: { type: keyword }
   # session: sess
+
 mappingConsume: &mappingConsume
   at: { type: date, format: "yyyy-MM-dd'T'HH:mm:ssZ" }
   data: { type: object }

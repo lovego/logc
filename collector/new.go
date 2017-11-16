@@ -24,7 +24,7 @@ type PusherGetter interface {
 }
 
 type Pusher interface {
-	Push(rows []map[string]interface{})
+	Push(rows []map[string]interface{}) bool
 }
 
 type Collector struct {

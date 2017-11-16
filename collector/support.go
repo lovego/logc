@@ -6,21 +6,12 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/lovego/xiaomei/utils/alarm"
+	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/fs"
-	"github.com/lovego/xiaomei/utils/logger"
 )
 
-var log *logger.Logger
-var theAlarm *alarm.Alarm
-
-func SetLogger(logger *logger.Logger) {
-	log = logger
-}
-
-func SetAlarm(alarm *alarm.Alarm) {
-	theAlarm = alarm
-}
+var log = config.Logger()
+var theAlarm = config.Alarm()
 
 func openFile(path string) *os.File {
 	file, err := os.Open(path)

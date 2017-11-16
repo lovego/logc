@@ -22,7 +22,7 @@ func (p *Pusher) Push(rows []map[string]interface{}) bool {
 	if len(rows) == 0 {
 		return true
 	}
-	if p.file.IsTimeSeriesIndex() {
+	if p.file.TimeSeriesIndex != nil {
 		for _, indexData := range p.getIndicesRows(rows) {
 			if indexData.index != p.currentIndex {
 				if !p.ensureIndex(indexData.index) {
@@ -76,7 +76,7 @@ func (p *Pusher) getIndicesRows(rows []map[string]interface{}) (result []indexRo
 	indices := []string{}
 	m := make(map[string][]map[string]interface{})
 	for _, row := range rows {
-		if index := p.getIndexName(row); index != `` {
+		if index := p.getTimeSeriesIndexName(row); index != `` {
 			if m[index] == nil {
 				m[index] = []map[string]interface{}{row}
 				indices = append(indices, index)
@@ -91,7 +91,7 @@ func (p *Pusher) getIndicesRows(rows []map[string]interface{}) (result []indexRo
 	return
 }
 
-func (p *Pusher) getIndexName(row map[string]interface{}) string {
+func (p *Pusher) getTimeSeriesIndexName(row map[string]interface{}) string {
 	value, ok := row[p.file.TimeField].(string)
 	if !ok {
 		p.logger.Errorf("non string timeField %s: %v", p.file.TimeField, row[p.file.TimeField])
@@ -102,7 +102,7 @@ func (p *Pusher) getIndexName(row map[string]interface{}) string {
 		p.logger.Errorf("parse timeField %s with layout %s error: %v", p.file.TimeField, p.file.TimeFormat, err)
 		return ``
 	}
-	return p.file.GetIndex(at)
+	return p.file.TimeSeriesIndex.Get(at)
 }
 
 func convertDocs(docs []map[string]interface{}) [][2]interface{} {

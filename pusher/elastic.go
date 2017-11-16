@@ -38,54 +38,70 @@ func (p *Pusher) ensureIndex(index string) bool {
 		p.logger.Errorf("put mapping %s/%s error: %+v\n", index, p.file.Type, err)
 		return false
 	}
-	p.deleteObsolete()
+	p.deleteObsoleteIndices()
 	return true
 }
 
 // http://log-es.wumart.com/_cat/indices/logc-dev-*?h=index&s=index:desc
-func (p *Pusher) deleteObsolete() {
-	esAddr := elasticSearch.BaseAddrs[0]
-	u, err := url.Parse(esAddr)
-	if err != nil {
-		p.logger.Errorf("parse es addr %s error: %+v\n", esAddr, err)
+func (p *Pusher) deleteObsoleteIndices() {
+	if p.file.IndexKeep <= 0 {
 		return
 	}
-	for _, index := range p.getObsoleteIndices(u) {
-		p.deleteIndex(u.Host, u.Scheme, index)
+	for _, index := range p.getObsoleteIndices() {
+		if err := elasticSearch.Delete(index, nil); err != nil {
+			p.logger.Errorf("delete index %s error: %s", index, err)
+		}
 	}
 }
 
-func (p *Pusher) getObsoleteIndices(u *url.URL) []string {
-	// u.path: /logc-dev-
-	u.Path = fmt.Sprintf("/_cat/indices%s%s*", u.Path, p.file.Index)
-	u.RawQuery = `h=index&s=index:desc`
-	uri := u.String()
-	res, err := httputil.Get(uri, nil, nil)
-	if err != nil {
-		p.logger.Errorf("get es history index %s error: %+v\n", uri, err)
+func (p *Pusher) getObsoleteIndices() []string {
+	indices := p.getIndices()
+	if len(indices) <= p.file.IndexKeep {
 		return nil
 	}
-	b, err := res.GetBody()
-	if err != nil {
-		p.logger.Errorf("get es history index error: ", err)
-		return nil
-	}
-	esIndices := strings.Split(string(b), "\n")
-	if len(esIndices) == 0 {
-		p.logger.Error("no esIndices for ", uri)
-		return nil
-	}
-	if len(esIndices) > p.file.IndexKeep {
-		return esIndices[p.file.IndexKeep:]
-	}
-	return nil
+	return indices[p.file.IndexKeep:]
 }
 
-func (p *Pusher) deleteIndex(host, scheme, index string) {
-	u := url.URL{Host: host, Scheme: scheme, Path: index}
-	uri := u.String()
-	_, err := httputil.Delete(uri, nil, nil)
+func (p *Pusher) getIndices() (indices []string) {
+	uri, err := url.Parse(conf.ElasticSearch[0])
 	if err != nil {
-		p.logger.Errorf("delete es index %s error: %+v\n", uri, err)
+		p.logger.Errorf("parse es addr %s error: %v", conf.ElasticSearch[0], err)
+		return
 	}
+
+	indicesData := p.catIndices(*uri)
+	if len(indicesData) == 0 {
+		return
+	}
+	for _, data := range indicesData {
+		index := strings.TrimPrefix(data.Index, uri.Path)
+		if p.file.TimeSeriesIndex.Match(index) {
+			indices = append(indices, index)
+		}
+	}
+	if len(indices) == 0 {
+		p.logger.Errorf("no indices matches: %s", p.file.Index)
+	}
+	return
+}
+
+type indexData struct {
+	Index string `json:"index"`
+}
+
+func (p *Pusher) catIndices(uri url.URL) (result []indexData) {
+	// uri.Path: /logc-dev-
+	pattern := uri.Path + p.file.TimeSeriesIndex.Pattern()
+	uri.Path = fmt.Sprintf("/_cat/indices%s", pattern)
+	uri.RawQuery = `format=json&h=index&s=index:desc`
+	uriStr := uri.String()
+
+	if err := httputil.GetJson(uriStr, nil, nil, &result); err != nil {
+		p.logger.Errorf("GET %s error: %+v\n", uriStr, err)
+		return
+	}
+	if len(result) == 0 {
+		p.logger.Errorf("no indices matches: %s", pattern)
+	}
+	return
 }

@@ -16,7 +16,7 @@ type Config struct {
 	RotateCmd         []string               `yaml:"rotateCmd"`
 	Mailer            string                 `yaml:"mailer"`
 	Keepers           []string               `yaml:"keepers"`
-	Files             []*File                `yaml:"files"`
+	Files             []File                 `yaml:"files"`
 }
 
 func (conf *Config) check() {
@@ -24,8 +24,9 @@ func (conf *Config) check() {
 		log.Fatal("config: empty name")
 	}
 	conf.checkBatchWait()
-	for _, file := range conf.Files {
+	for i, file := range conf.Files {
 		file.check()
+		conf.Files[i] = file
 	}
 }
 

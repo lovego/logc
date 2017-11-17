@@ -7,10 +7,10 @@ import (
 )
 
 type Getter struct {
-	file *config.File
+	file config.File
 }
 
-func NewGetter(file *config.File) collector.PusherGetter {
+func NewGetter(file config.File) collector.PusherGetter {
 	return &Getter{file: file}
 }
 

@@ -14,15 +14,7 @@ var theConf Config
 
 func Get() Config {
 	if theConf.Name == `` {
-		flag.CommandLine.Usage = usage
-		flag.Parse()
-
-		if flag.NArg() != 1 {
-			usage()
-			os.Exit(1)
-		}
-
-		configFile := flag.Arg(0)
+		configFile := getArguments()
 		if notExist(configFile) {
 			log.Fatal(configFile + ` not exist.`)
 		}
@@ -58,6 +50,18 @@ func parse(configFile string) Config {
 func notExist(p string) bool {
 	_, err := os.Stat(p)
 	return err != nil && os.IsNotExist(err)
+}
+
+func getArguments() string {
+	flag.CommandLine.Usage = usage
+	flag.Parse()
+
+	if flag.NArg() != 1 {
+		usage()
+		os.Exit(1)
+	}
+
+	return flag.Arg(0)
 }
 
 func usage() {

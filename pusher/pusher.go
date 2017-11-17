@@ -8,7 +8,7 @@ import (
 )
 
 type Pusher struct {
-	file         *config.File
+	file         config.File
 	logger       *logger.Logger
 	currentIndex string
 }

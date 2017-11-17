@@ -1,10 +1,12 @@
 package pusher
 
 import (
+	"strings"
 	"time"
 
 	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/logger"
+	"github.com/nu7hatch/gouuid"
 )
 
 type Pusher struct {
@@ -23,7 +25,7 @@ func (p *Pusher) Push(rows []map[string]interface{}) bool {
 		return true
 	}
 	if p.file.TimeSeriesIndex != nil {
-		for _, indexData := range p.getIndicesRows(rows) {
+		for _, indexData := range p.getTimeSeriesIndicesRows(rows) {
 			if indexData.index != p.currentIndex {
 				if !p.ensureIndex(indexData.index) {
 					return false
@@ -43,7 +45,7 @@ func (p *Pusher) push(index string, rows []map[string]interface{}) {
 		return
 	}
 	p.mergeJsonData(rows)
-	docs := convertDocs(rows)
+	docs := p.convertDocs(rows)
 	for {
 		if docs = p.bulkCreate(index, docs); len(docs) == 0 {
 			break
@@ -72,7 +74,7 @@ func (p *Pusher) mergeJsonData(rows []map[string]interface{}) {
 	}
 }
 
-func (p *Pusher) getIndicesRows(rows []map[string]interface{}) (result []indexRows) {
+func (p *Pusher) getTimeSeriesIndicesRows(rows []map[string]interface{}) (result []indexRows) {
 	indices := []string{}
 	m := make(map[string][]map[string]interface{})
 	for _, row := range rows {
@@ -105,10 +107,23 @@ func (p *Pusher) getTimeSeriesIndexName(row map[string]interface{}) string {
 	return p.file.TimeSeriesIndex.Get(at)
 }
 
-func convertDocs(docs []map[string]interface{}) [][2]interface{} {
+func (p *Pusher) convertDocs(docs []map[string]interface{}) [][2]interface{} {
 	data := [][2]interface{}{}
 	for _, doc := range docs {
-		data = append(data, [2]interface{}{nil, doc})
+		if id, err := genUUID(); err != nil {
+			p.logger.Errorf("generate uuid error: %v", err)
+			data = append(data, [2]interface{}{nil, doc})
+		} else {
+			data = append(data, [2]interface{}{id, doc})
+		}
 	}
 	return data
+}
+
+func genUUID() (string, error) {
+	if uid, err := uuid.NewV4(); err != nil {
+		return ``, err
+	} else {
+		return strings.Replace(uid.String(), `-`, ``, -1), nil
+	}
 }

@@ -38,18 +38,20 @@ func (p *Pusher) ensureIndex(index string) bool {
 		p.logger.Errorf("put mapping %s/%s error: %+v\n", index, p.file.Type, err)
 		return false
 	}
-	p.deleteObsoleteIndices()
+	p.deleteObsoleteIndices(index)
 	return true
 }
 
 // http://log-es.wumart.com/_cat/indices/logc-dev-*?h=index&s=index:desc
-func (p *Pusher) deleteObsoleteIndices() {
+func (p *Pusher) deleteObsoleteIndices(currentIndex string) {
 	if p.file.IndexKeep <= 0 {
 		return
 	}
 	for _, index := range p.getObsoleteIndices() {
-		if err := elasticSearch.Delete(index, nil); err != nil {
-			p.logger.Errorf("delete index %s error: %s", index, err)
+		if index != currentIndex {
+			if err := elasticSearch.Delete(index, nil); err != nil {
+				p.logger.Errorf("delete index %s error: %s", index, err)
+			}
 		}
 	}
 }

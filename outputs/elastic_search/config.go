@@ -1,15 +1,9 @@
-package config
+package elastic_search
 
-import (
-	"log"
-	"path/filepath"
-	"time"
-)
-
-type File struct {
-	Path            string `yaml:"path"`
-	Index           string `yaml:"index"`
-	TimeSeriesIndex *timeSeriesIndex
+type Config struct {
+	Addrs           []string `yaml:"elasticsearch"`
+	Index           string   `yaml:"index"`
+	timeSeriesIndex *timeSeriesIndex
 	IndexKeep       int                               `yaml:"indexKeep"`
 	Type            string                            `yaml:"type"`
 	Mapping         map[string]map[string]interface{} `yaml:"mapping"`
@@ -17,12 +11,7 @@ type File struct {
 	TimeFormat      string                            `yaml:"timeFormat"`
 }
 
-func (file *File) check() {
-	if file.Path == `` {
-		log.Fatalf("path missing for file: %+v", file)
-	} else {
-		file.Path = filepath.Clean(file.Path)
-	}
+func New() {
 	if file.Index == `` {
 		log.Fatalf("index missing for file: %s", file.Path)
 	}

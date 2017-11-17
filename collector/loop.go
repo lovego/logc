@@ -35,7 +35,7 @@ func (c *Collector) close() {
 	c.logger.Printf("collector close")
 	c.reader.Close()
 	if err := c.logFile.Close(); err != nil {
-		log.Errorf("logger: close error: %v", err)
+		logger.Errorf("logger: close error: %v", err)
 	}
 }
 

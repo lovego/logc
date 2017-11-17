@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/lovego/logc/collector"
+	"github.com/lovego/logc/collector/reader"
 	"github.com/lovego/logc/config"
 	"github.com/lovego/logc/pusher"
 	"github.com/lovego/logc/watch"
@@ -16,14 +17,17 @@ var logger = config.Logger()
 
 func main() {
 	conf := config.Get()
-	log.Printf("logc starting. (log-es: %v)\n", conf.ElasticSearch)
-
-	startRotate(conf.RotateTime, conf.RotateCmd)
+	reader.Setup(conf.Batch, logger)
+	collector.Setup(logger, config.Alarm())
 
 	files := make(map[string]func() watch.Collector)
 	for _, file := range conf.Files {
 		files[file.Path] = collectorGetter(file.Path, pusher.NewGetter(file))
 	}
+
+	startRotate(conf.Rotate.Time, conf.Rotate.Cmd)
+
+	log.Printf("logc starting. (log-es: %v)\n", conf.ElasticSearch)
 	watch.Watch(files)
 }
 

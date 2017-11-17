@@ -1,13 +1,12 @@
 package config
 
 import (
-	//	"fmt"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/lovego/deep"
+	"github.com/lovego/logc/collector/reader"
 )
 
 func TestGet(t *testing.T) {
@@ -16,72 +15,79 @@ func TestGet(t *testing.T) {
 	expect := getTestExpectConfig()
 
 	if diff := deep.Equal(got, expect); diff != nil {
-		t.Fatal(strings.Join(diff, "\n"))
+		t.Fatal("\n" + strings.Join(diff, "\n"))
 	}
 }
 
 func getTestExpectConfig() Config {
-	mapping := map[string]map[string]interface{}{
-		"host":     {"type": "keyword"},
-		"query":    {"type": "text"},
-		"status":   {"type": "keyword"},
-		"req_body": {"type": "integer"},
-		"res_body": {"type": "integer"},
-		"agent":    {"type": "text"},
-		"at":       {"type": "date"},
-		"method":   {"type": "keyword"},
-		"path": {
+	mapping := map[interface{}]interface{}{
+		"host":     map[interface{}]interface{}{"type": "keyword"},
+		"query":    map[interface{}]interface{}{"type": "text"},
+		"status":   map[interface{}]interface{}{"type": "keyword"},
+		"req_body": map[interface{}]interface{}{"type": "integer"},
+		"res_body": map[interface{}]interface{}{"type": "integer"},
+		"agent":    map[interface{}]interface{}{"type": "text"},
+		"at":       map[interface{}]interface{}{"type": "date"},
+		"method":   map[interface{}]interface{}{"type": "keyword"},
+		"path": map[interface{}]interface{}{
 			"type": "text",
-			"fields": map[string]interface{}{
-				"raw": map[string]interface{}{"type": "keyword"},
+			"fields": map[interface{}]interface{}{
+				"raw": map[interface{}]interface{}{"type": "keyword"},
 			},
 		},
-		"ip":       {"type": "ip"},
-		"refer":    {"type": "text"},
-		"proto":    {"type": "keyword"},
-		"duration": {"type": "float"},
+		"ip":       map[interface{}]interface{}{"type": "ip"},
+		"refer":    map[interface{}]interface{}{"type": "text"},
+		"proto":    map[interface{}]interface{}{"type": "keyword"},
+		"duration": map[interface{}]interface{}{"type": "float"},
 	}
 
 	return Config{
-		Name:              "test",
-		ElasticSearch:     []string{"http://log-es.wumart.com/logc-dev-"},
-		BatchSize:         102400,
-		BatchWait:         "3s",
-		BatchWaitDuration: 3 * time.Second,
-		RotateTime:        "33 8 1 * * *",
-		RotateCmd:         []string{"logrotate", "logrotate.conf"},
-		Mailer:            "mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh",
-		Keepers:           []string{},
+		Name:    "test",
+		Mailer:  "mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh",
+		Keepers: []string{},
+		Batch:   reader.Batch{Size: 102400, Wait: "3s"},
+		Rotate: Rotate{
+			Time: "33 8 1 * * *",
+			Cmd:  []string{"logrotate", "logrotate.conf"},
+		},
 		Files: []File{
 			{
-				Path:            "app.log",
-				Index:           "app-<2006.01.02>",
-				TimeSeriesIndex: &timeSeriesIndex{prefix: `app-`, timeLayout: `2006.01.02`},
-				IndexKeep:       3,
-				Type:            "app-log",
-				Mapping:         mapping,
-				TimeField:       "at",
-				TimeFormat:      "2006-01-02T15:04:05Z0700",
+				Path: "app.log",
+				Outputs: []map[string]interface{}{{
+					"@type":      "elastic-search",
+					"addrs":      []interface{}{"http://log-es.wumart.com/logc-dev-"},
+					"index":      "app-<2006.01.02>",
+					"indexKeep":  3,
+					"type":       "app-log",
+					"mapping":    mapping,
+					"timeField":  "at",
+					"timeFormat": "2006-01-02T15:04:05Z0700",
+				}},
 			},
 			{
-				Path:            "app.err",
-				Index:           "app-<2006.01.02>-err",
-				TimeSeriesIndex: &timeSeriesIndex{prefix: `app-`, timeLayout: `2006.01.02`, suffix: `-err`},
-				Type:            "app-err",
-				Mapping:         mapping,
-				TimeField:       "at",
-				TimeFormat:      time.RFC3339,
+				Path: "app.err",
+				Outputs: []map[string]interface{}{{
+					"@type":     "elastic-search",
+					"addrs":     []interface{}{"http://log-es.wumart.com/logc-dev-"},
+					"index":     "app-<2006.01.02>-err",
+					"type":      "app-err",
+					"mapping":   mapping,
+					"timeField": "at",
+				}},
 			},
 			{
-				Path:  "consume.log",
-				Index: "test-consume",
-				Type:  "consume-log",
-				Mapping: map[string]map[string]interface{}{
-					"at":   {"type": "date"},
-					"data": {"type": "object"},
-				},
-				TimeField:  "at",
-				TimeFormat: time.RFC3339,
+				Path: "consume.log",
+				Outputs: []map[string]interface{}{{
+					"@type": "elastic-search",
+					"addrs": []interface{}{"http://log-es.wumart.com/logc-dev-"},
+					"index": "test-consume",
+					"type":  "consume-log",
+					"mapping": map[interface{}]interface{}{
+						"at":   map[interface{}]interface{}{"type": "date"},
+						"data": map[interface{}]interface{}{"type": "object"},
+					},
+					"timeField": "at",
+				}},
 			},
 		},
 	}

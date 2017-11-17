@@ -2,42 +2,40 @@ package config
 
 import (
 	"log"
-	"time"
+	"path/filepath"
+
+	"github.com/lovego/logc/collector/reader"
 )
 
 type Config struct {
-	Name              string                 `yaml:"name"`
-	ElasticSearch     []string               `yaml:"elasticsearch"`
-	MergeData         map[string]interface{} `yaml:"mergeData"`
-	BatchSize         int                    `yaml:"batchSize"` // <= 0 means unlimted
-	BatchWait         string                 `yaml:"batchWait"`
-	BatchWaitDuration time.Duration          `yaml:"-"` // <= 0 means don't wait
-	RotateTime        string                 `yaml:"rotateTime"`
-	RotateCmd         []string               `yaml:"rotateCmd"`
-	Mailer            string                 `yaml:"mailer"`
-	Keepers           []string               `yaml:"keepers"`
-	Files             []File                 `yaml:"files"`
+	Name    string       `yaml:"name"`
+	Mailer  string       `yaml:"mailer"`
+	Keepers []string     `yaml:"keepers"`
+	Batch   reader.Batch `yaml:"batch"`
+	Rotate  Rotate       `yaml:"rotate"`
+	Files   []File       `yaml:"files"`
+}
+
+type Rotate struct {
+	Time string   `yaml:"time"`
+	Cmd  []string `yaml:"cmd"`
+}
+
+type File struct {
+	Path    string                   `yaml:"path"`
+	Outputs []map[string]interface{} `yaml:"outputs"`
 }
 
 func (conf *Config) check() {
 	if conf.Name == `` {
 		log.Fatal("config: empty name")
 	}
-	conf.checkBatchWait()
 	for i, file := range conf.Files {
-		file.check()
+		if file.Path == `` {
+			log.Fatalf("path missing for file: %+v", file)
+		} else {
+			file.Path = filepath.Clean(file.Path)
+		}
 		conf.Files[i] = file
 	}
-}
-
-func (conf *Config) checkBatchWait() {
-	if conf.BatchWait == `` {
-		conf.BatchWaitDuration = -1
-		return
-	}
-	duration, err := time.ParseDuration(conf.BatchWait)
-	if err != nil {
-		log.Fatalf("parse batchWait error: %v", err)
-	}
-	conf.BatchWaitDuration = duration
 }

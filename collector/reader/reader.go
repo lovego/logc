@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/logger"
 )
 
@@ -28,19 +27,6 @@ func New(file *os.File, offsetPath string, logger *logger.Logger) *Reader {
 	r.seekToSavedOffset()
 
 	return r
-}
-
-var batchSize = 100 * 1024
-var batchWait = time.Second
-
-func init() {
-	conf := config.Get()
-	if conf.BatchSize > 0 {
-		batchSize = conf.BatchSize
-	}
-	if conf.BatchWaitDuration >= 0 {
-		batchWait = conf.BatchWaitDuration
-	}
 }
 
 // drain 是否读完了所有内容

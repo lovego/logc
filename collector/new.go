@@ -4,13 +4,9 @@ import (
 	"os"
 
 	"github.com/lovego/logc/collector/reader"
+	"github.com/lovego/logc/outputs"
 	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 )
-
-type Logger interface {
-	Printf(format string, v ...interface{})
-	Close()
-}
 
 type Reader interface {
 	Read() (rows []map[string]interface{}, drain bool)
@@ -19,24 +15,16 @@ type Reader interface {
 	Close()
 }
 
-type PusherGetter interface {
-	Get(*loggerpkg.Logger) Pusher
-}
-
-type Pusher interface {
-	Push(rows []map[string]interface{}) bool
-}
-
 type Collector struct {
 	logFile    *os.File
 	logger     *loggerpkg.Logger
 	reader     Reader
-	pusher     Pusher
+	output     outputs.Output
 	writeEvent chan struct{}
 	closeEvent chan struct{}
 }
 
-func New(path string, pusherGetter PusherGetter) *Collector {
+func New(path string, output outputs.Output) *Collector {
 	var file, logFile *os.File
 	if file = openFile(path); file != nil {
 		if logcPath := getLogcPath(path, file); logcPath != `` {
@@ -48,7 +36,7 @@ func New(path string, pusherGetter PusherGetter) *Collector {
 						logFile:    logFile,
 						logger:     theLogger,
 						reader:     theReader,
-						pusher:     pusherGetter.Get(theLogger),
+						output:     output,
 						writeEvent: make(chan struct{}, 1),
 						closeEvent: make(chan struct{}, 1),
 					}

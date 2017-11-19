@@ -36,13 +36,9 @@ func parse(configFile string) Config {
 	if err := yaml.Unmarshal(content, &confs); err != nil {
 		log.Fatal(err)
 	}
-	env := os.Getenv(`GOENV`)
-	if env == `` {
-		env = `dev`
-	}
-	conf, ok := confs.Envs[env]
+	conf, ok := confs.Envs[Env()]
 	if !ok {
-		log.Fatalf(`%s: %s: undefined.`, configFile, env)
+		log.Fatalf(`%s: %s: undefined.`, configFile, Env())
 	}
 	return conf
 }

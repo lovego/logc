@@ -11,7 +11,6 @@ import (
 	"github.com/lovego/xiaomei/utils/httputil"
 )
 
-var conf = config.Get()
 var elasticSearch = elastic.New2(
 	&httputil.Client{Client: http.DefaultClient}, conf.ElasticSearch...,
 )

@@ -2,19 +2,20 @@ package watch
 
 import (
 	"log"
+	"os"
 	"path/filepath"
 
 	"gopkg.in/fsnotify.v1"
 )
 
-func getCollectors(collectorMakers map[string]func() Collector) map[string]Collector {
-	collectors := make(map[string]Collector)
+func getCollectors(collectorMakers map[string]func() []Collector) map[string][]Collector {
+	collectorsMap := make(map[string][]Collector)
 	for path, maker := range collectorMakers {
-		if collector := maker(); collector != nil {
-			collectors[path] = collector
+		if collectors := maker(); len(collectors) > 0 {
+			collectorsMap[path] = collectors
 		}
 	}
-	return collectors
+	return collectorsMap
 }
 
 func getWatcher(paths map[string]bool) *fsnotify.Watcher {
@@ -33,10 +34,19 @@ func getWatcher(paths map[string]bool) *fsnotify.Watcher {
 	return watcher
 }
 
-func getDirs(collectors map[string]Collector) map[string]bool {
+func getDirs(collectorsMap map[string][]Collector) map[string]bool {
 	m := make(map[string]bool)
-	for path := range collectors {
+	for path := range collectorsMap {
 		m[filepath.Dir(path)] = true
 	}
 	return m
+}
+
+func openedSameFile(collectors []Collector, fi os.FileInfo) bool {
+	for _, collector := range collectors {
+		if collector.OpenedSameFile(fi) {
+			return true
+		}
+	}
+	return false
 }

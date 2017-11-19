@@ -10,6 +10,18 @@ import (
 	"github.com/lovego/xiaomei/utils/mailer"
 )
 
+var theEnv string
+
+func Env() string {
+	if theEnv == `` {
+		theEnv = os.Getenv(`GOENV`)
+		if theEnv == `` {
+			theEnv = `dev`
+		}
+	}
+	return theEnv
+}
+
 var theAlarm *alarm.Alarm
 
 func Alarm() *alarm.Alarm {

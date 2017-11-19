@@ -28,9 +28,9 @@ type Collector interface {
 	Printf(format string, v ...interface{})
 }
 
-func Watch(collectorMakers map[string]func() Collector) {
-	collectors := getCollectors(collectorMakers)
-	dirsWatcher := getWatcher(getDirs(collectors))
+func Watch(collectorMakers map[string]func() []Collector) {
+	collectorsMap := getCollectors(collectorMakers)
+	dirsWatcher := getWatcher(getDirs(collectorsMap))
 	defer dirsWatcher.Close()
 
 	for {
@@ -40,33 +40,35 @@ func Watch(collectorMakers map[string]func() Collector) {
 		case event := <-dirsWatcher.Events:
 			path := strings.TrimPrefix(event.Name, `./`)
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				if collector := collectors[path]; collector != nil {
+				for _, collector := range collectorsMap[path] {
 					collector.NotifyWrite()
 				}
 			} else if event.Op&fsnotify.Create == fsnotify.Create {
-				if !handleRename(path, collectors) {
-					handleCreate(path, collectors, collectorMakers)
+				if !handleRename(path, collectorsMap) {
+					handleCreate(path, collectorsMap, collectorMakers)
 				}
 			} else if event.Op&fsnotify.Remove == fsnotify.Remove {
-				handleRemove(path, collectors)
+				handleRemove(path, collectorsMap)
 			}
 		}
 	}
 }
 
-func handleRename(path string, collectors map[string]Collector) bool {
+func handleRename(path string, collectorsMap map[string][]Collector) bool {
 	fi, err := os.Stat(path)
 	if err != nil {
 		log.Printf("watch: stat %s error: %v", path, err)
 		return true
 	}
-	for oldPath, collector := range collectors {
-		if collector.OpenedSameFile(fi) {
+	for oldPath, collectors := range collectorsMap {
+		if openedSameFile(collectors, fi) {
 			if oldPath != path {
-				handleRemove(path, collectors)
-				delete(collectors, oldPath)
-				collectors[path] = collector
-				collector.Printf("rename from %s to %s", oldPath, path)
+				handleRemove(path, collectorsMap)
+				delete(collectorsMap, oldPath)
+				collectorsMap[path] = collectors
+				for _, collector := range collectors {
+					collector.Printf("rename from %s to %s", oldPath, path)
+				}
 			}
 			return true
 		}
@@ -75,19 +77,19 @@ func handleRename(path string, collectors map[string]Collector) bool {
 }
 
 func handleCreate(
-	path string, collectors map[string]Collector, collectorMakers map[string]func() Collector,
+	path string, collectorsMap map[string][]Collector, collectorMakers map[string]func() []Collector,
 ) {
-	handleRemove(path, collectors)
+	handleRemove(path, collectorsMap)
 	if maker := collectorMakers[path]; maker != nil {
-		if collector := maker(); collector != nil {
-			collectors[path] = collector
+		if collectors := maker(); len(collectors) > 0 {
+			collectorsMap[path] = collectors
 		}
 	}
 }
 
-func handleRemove(path string, collectors map[string]Collector) {
-	if collector := collectors[path]; collector != nil {
+func handleRemove(path string, collectorsMap map[string][]Collector) {
+	for _, collector := range collectorsMap[path] {
 		collector.NotifyClose()
-		delete(collectors, path)
 	}
+	delete(collectorsMap, path)
 }

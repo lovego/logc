@@ -1,19 +1,27 @@
-package pusher
+package outputs
 
 import (
-	"github.com/lovego/logc/collector"
-	"github.com/lovego/logc/config"
+	"github.com/lovego/logc/outputs/elastic_search"
 	"github.com/lovego/xiaomei/utils/logger"
 )
 
-type Getter struct {
-	file config.File
+type Output interface {
+	Write(rows []map[string]interface{}, logger *loggerpkg.Logger) bool
 }
 
-func NewGetter(file config.File) collector.PusherGetter {
-	return &Getter{file: file}
+func Check(conf map[string]interface{}) {
 }
 
-func (g *Getter) Get(log *logger.Logger) collector.Pusher {
-	return &Pusher{file: g.file, logger: log}
+func New(conf map[string]interface{}, file string) Output {
+	switch typ := conf[`@type`].(string); typ {
+	case `elastic-search`:
+		if o := elastic_search.New(conf, file); o != nil {
+			return o
+		} else {
+			return nil
+		}
+	default:
+		logger.Errorf("unknown output @type: %v", typ)
+		return nil
+	}
 }

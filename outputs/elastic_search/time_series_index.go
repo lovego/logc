@@ -1,4 +1,4 @@
-package config
+package elastic_search
 
 import (
 	"errors"

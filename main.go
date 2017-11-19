@@ -8,7 +8,7 @@ import (
 	"github.com/lovego/logc/collector"
 	"github.com/lovego/logc/collector/reader"
 	"github.com/lovego/logc/config"
-	"github.com/lovego/logc/pusher"
+	"github.com/lovego/logc/outputs"
 	"github.com/lovego/logc/watch"
 	"github.com/robfig/cron"
 )
@@ -20,24 +20,33 @@ func main() {
 	reader.Setup(conf.Batch, logger)
 	collector.Setup(logger, config.Alarm())
 
-	files := make(map[string]func() watch.Collector)
-	for _, file := range conf.Files {
-		files[file.Path] = collectorGetter(file.Path, pusher.NewGetter(file))
-	}
-
 	startRotate(conf.Rotate.Time, conf.Rotate.Cmd)
 
-	log.Printf("logc starting. (log-es: %v)\n", conf.ElasticSearch)
-	watch.Watch(files)
+	collectorMakers := getCollectorMakers(conf.Files)
+
+	log.Printf("logc starting.\n")
+	watch.Watch(collectorMakers)
 }
 
-func collectorGetter(path string, pusherGetter collector.PusherGetter) func() watch.Collector {
-	return func() watch.Collector {
-		if c := collector.New(path, pusherGetter); c == nil {
-			return nil // must
-		} else {
-			return c // nil pointer makes a non nil interface
+func getCollectorMakers(files []config.File) map[string]func() []watch.Collector {
+	makers := make(map[string]func() []watch.Collector)
+	for _, file := range conf.Files {
+		makers[file.Path] = getCollectorsMaker(file)
+	}
+	return makers
+}
+
+func getCollectorsMaker(file config.File) func() []watch.Collector {
+	// outputs.CheckConfig(file.Path, file.Outputs)
+	return func() (collectors []watch.Collector) {
+		for _, outputConf := range file.Outputs {
+			if output := outputs.New(outputConf); output != nil {
+				if c := collector.New(file.Path, output); c != nil {
+					collectors = append(collectors, c)
+				}
+			}
 		}
+		return collectors
 	}
 }
 

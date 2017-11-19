@@ -1,16 +1,14 @@
-package pusher
+package elastic_search
 
 import (
 	"strings"
 	"time"
 
-	"github.com/lovego/logc/config"
 	"github.com/lovego/xiaomei/utils/logger"
 	"github.com/nu7hatch/gouuid"
 )
 
 type Pusher struct {
-	file         config.File
 	logger       *logger.Logger
 	currentIndex string
 }

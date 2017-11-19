@@ -1,20 +1,35 @@
 package elastic_search
 
-type Config struct {
-	Addrs           []string `yaml:"elasticsearch"`
-	Index           string   `yaml:"index"`
+import (
+	"errors"
+	"github.com/spf13/cast"
+)
+
+type ElasticSearch struct {
+	file            string
+	addrs           []string
+	index           string
 	timeSeriesIndex *timeSeriesIndex
-	IndexKeep       int                               `yaml:"indexKeep"`
-	Type            string                            `yaml:"type"`
-	Mapping         map[string]map[string]interface{} `yaml:"mapping"`
-	TimeField       string                            `yaml:"timeField"`
-	TimeFormat      string                            `yaml:"timeFormat"`
+	indexKeep       int
+	typ             string
+	mapping         map[string]map[string]interface{}
+	timeField       string
+	timeFormat      string
 }
 
-func New() {
-	if file.Index == `` {
-		log.Fatalf("index missing for file: %s", file.Path)
+func New(conf map[string]interface{}, file string) *ElasticSearch {
+	if len(conf) == 0 {
+		logger.Errorf(`elastic-search(%s): empty config.`, file)
+		return nil
 	}
+	es := ElasticSearch{file: file}
+
+	if addrs := parseAddrs(conf[`addrs`]); len(addrs) > 0 {
+		es.addrs = addrs
+	} else {
+		return nil
+	}
+
 	var err error
 	if file.TimeSeriesIndex, err = parseTimeSeriesIndex(file.Index); err != nil {
 		log.Fatalf("file %s: %v", file.Path, err)
@@ -30,6 +45,19 @@ func New() {
 		file.TimeFormat = time.RFC3339
 	}
 	file.cleanMapping()
+}
+
+func parseAddrs(v interface{}) []string {
+	if addrs, err := cast.ToStringSliceE(v); err == nil {
+		if len(addrs) > 0 {
+			return addrs
+		} else {
+			logger.Errorf(`elastic-search(%s): addrs is emtpty.`, file)
+		}
+	} else {
+		logger.Errorf(`elastic-search(%s): addrs should be an string array.`, file)
+	}
+	return nil
 }
 
 func (file *File) cleanMapping() {

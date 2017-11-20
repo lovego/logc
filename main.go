@@ -30,7 +30,7 @@ func main() {
 
 func getCollectorMakers(files []config.File) map[string]func() []watch.Collector {
 	makers := make(map[string]func() []watch.Collector)
-	for _, file := range conf.Files {
+	for _, file := range files {
 		makers[file.Path] = getCollectorsMaker(file)
 	}
 	return makers
@@ -40,7 +40,7 @@ func getCollectorsMaker(file config.File) func() []watch.Collector {
 	// outputs.CheckConfig(file.Path, file.Outputs)
 	return func() (collectors []watch.Collector) {
 		for _, outputConf := range file.Outputs {
-			if outputMaker := outputs.Maker(outputConf); outputMaker != nil {
+			if outputMaker := outputs.Maker(outputConf, file.Path); outputMaker != nil {
 				if c := collector.New(file.Path, outputMaker); c != nil {
 					collectors = append(collectors, c)
 				}

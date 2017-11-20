@@ -14,7 +14,7 @@ type Batch struct {
 	Wait string `yaml:"wait"` // empty or < 0 means use default value, 0 means don't wait
 }
 
-func Setup(batch Batch, logger loggerpkg.Logger) {
+func Setup(batch Batch, logger *loggerpkg.Logger) {
 	if batch.Size > 0 {
 		batchSize = batch.Size
 	}

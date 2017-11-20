@@ -22,7 +22,7 @@ func (c *Collector) collect() {
 	for {
 		rows, drain := c.reader.Read()
 		if len(rows) > 0 {
-			c.output.Write(rows, c.logger)
+			c.output.Write(rows)
 			c.logger.Printf("%d, %s\n", len(rows), c.reader.SaveOffset())
 		}
 		if drain {

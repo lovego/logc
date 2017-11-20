@@ -13,16 +13,16 @@ type Output interface {
 // For example. elastic_search has currentIndex state, it is designed only one file in mind.
 // So, when a collector is constucted, use a maker to make a new ouput.
 func Maker(conf map[string]interface{}, file string) func(*loggerpkg.Logger) Output {
-	return func(logger *loggerpkg.Logger) {
-		return New(conf, file)
+	return func(logger *loggerpkg.Logger) Output {
+		return New(conf, file, logger)
 	}
 }
 
-func New(conf map[string]interface{}, file string) Output {
+func New(conf map[string]interface{}, file string, logger *loggerpkg.Logger) Output {
 	switch typ := conf[`@type`].(string); typ {
 	case `elastic-search`:
 		// the if is required. because nil pointer makes a non nil interface.
-		if output := elastic_search.New(conf, file); output != nil {
+		if output := elastic_search.New(conf, file, logger); output != nil {
 			return output
 		} else {
 			return nil

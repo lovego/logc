@@ -4,13 +4,10 @@ import (
 	"strings"
 	"time"
 
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 	"github.com/nu7hatch/gouuid"
 )
 
-func (es *ElasticSearch) Write(
-	rows []map[string]interface{}, logger *loggerpkg.Logger,
-) (fatalError bool) {
+func (es *ElasticSearch) Write(rows []map[string]interface{}) (fatalError bool) {
 	if len(rows) == 0 {
 		return false
 	}
@@ -19,12 +16,10 @@ func (es *ElasticSearch) Write(
 		return false
 	}
 
-	return es.writeToTimeSeriesIndex(rows, logger)
+	return es.writeToTimeSeriesIndex(rows)
 }
 
-func (es *ElasticSearch) writeToTimeSeriesIndex(
-	rows []map[string]interface{}, logger *loggerpkg.Logger,
-) (fatalError bool) {
+func (es *ElasticSearch) writeToTimeSeriesIndex(rows []map[string]interface{}) (fatalError bool) {
 	indicesRows, fatalError := es.timeSeriesIndex.Group(rows)
 	if fatalError {
 		return true

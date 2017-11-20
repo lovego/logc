@@ -15,7 +15,7 @@ func (es *ElasticSearch) Write(
 		return false
 	}
 	if es.timeSeriesIndex == nil {
-		es.writeToIndex(es.Index, rows)
+		es.writeToIndex(es.index, rows)
 		return false
 	}
 
@@ -33,16 +33,17 @@ func (es *ElasticSearch) writeToTimeSeriesIndex(
 	for _, one := range indicesRows {
 		if one.Index != es.currentIndex {
 			if es.ensureIndex(one.Index) {
-				return nil, true
+				return true
 			}
-			tsi.currentIndex = one.Index
+			es.currentIndex = one.Index
 			prune = true
 		}
 		es.writeToIndex(one.Index, one.Rows)
 	}
 	if prune {
-		tsi.Prune(logger)
+		es.timeSeriesIndex.Prune(es.client)
 	}
+	return false
 }
 
 func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{}) {

@@ -40,8 +40,8 @@ func getCollectorsMaker(file config.File) func() []watch.Collector {
 	// outputs.CheckConfig(file.Path, file.Outputs)
 	return func() (collectors []watch.Collector) {
 		for _, outputConf := range file.Outputs {
-			if output := outputs.New(outputConf); output != nil {
-				if c := collector.New(file.Path, output); c != nil {
+			if outputMaker := outputs.Maker(outputConf); outputMaker != nil {
+				if c := collector.New(file.Path, outputMaker); c != nil {
 					collectors = append(collectors, c)
 				}
 			}

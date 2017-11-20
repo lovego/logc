@@ -2,21 +2,28 @@ package outputs
 
 import (
 	"github.com/lovego/logc/outputs/elastic_search"
-	"github.com/lovego/xiaomei/utils/logger"
+	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 )
 
 type Output interface {
-	Write(rows []map[string]interface{}, logger *loggerpkg.Logger) bool
+	Write(rows []map[string]interface{}) (fatalError bool)
 }
 
-func Check(conf map[string]interface{}) {
+// Different collector must use separate output. Because output has internal state.
+// For example. elastic_search has currentIndex state, it is designed only one file in mind.
+// So, when a collector is constucted, use a maker to make a new ouput.
+func Maker(conf map[string]interface{}, file string) func(*loggerpkg.Logger) Output {
+	return func(logger *loggerpkg.Logger) {
+		return New(conf, file)
+	}
 }
 
 func New(conf map[string]interface{}, file string) Output {
 	switch typ := conf[`@type`].(string); typ {
 	case `elastic-search`:
-		if o := elastic_search.New(conf, file); o != nil {
-			return o
+		// the if is required. because nil pointer makes a non nil interface.
+		if output := elastic_search.New(conf, file); output != nil {
+			return output
 		} else {
 			return nil
 		}

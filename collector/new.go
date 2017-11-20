@@ -3,7 +3,7 @@ package collector
 import (
 	"os"
 
-	"github.com/lovego/logc/collector/reader"
+	readerpkg "github.com/lovego/logc/collector/reader"
 	"github.com/lovego/logc/outputs"
 	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 )
@@ -24,24 +24,26 @@ type Collector struct {
 	closeEvent chan struct{}
 }
 
-func New(path string, output outputs.Output) *Collector {
+func New(path string, outputMaker func(*loggerpkg.Logger) outputs.Output) *Collector {
 	var file, logFile *os.File
 	if file = openFile(path); file != nil {
 		if logcPath := getLogcPath(path, file); logcPath != `` {
 			if logFile := openLogFile(logcPath + `.log`); logFile != nil {
-				theLogger := loggerpkg.New(``, logFile, theAlarm)
-				theLogger.Printf("collect %s", path)
-				if theReader := reader.New(file, logcPath+`.offset`, theLogger); theReader != nil {
-					collector := &Collector{
-						logFile:    logFile,
-						logger:     theLogger,
-						reader:     theReader,
-						output:     output,
-						writeEvent: make(chan struct{}, 1),
-						closeEvent: make(chan struct{}, 1),
+				logger := loggerpkg.New(``, logFile, theAlarm)
+				logger.Printf("collect %s", path)
+				if reader := readerpkg.New(file, logcPath+`.offset`, logger); reader != nil {
+					if output := outputMaker(logger); output != nil {
+						collector := &Collector{
+							logFile:    logFile,
+							logger:     logger,
+							reader:     reader,
+							output:     output,
+							writeEvent: make(chan struct{}, 1),
+							closeEvent: make(chan struct{}, 1),
+						}
+						go collector.loop()
+						return collector
 					}
-					go collector.loop()
-					return collector
 				}
 			}
 		}

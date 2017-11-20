@@ -1,4 +1,4 @@
-package elastic_search
+package time_series_index
 
 import (
 	"errors"

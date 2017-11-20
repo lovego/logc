@@ -49,9 +49,9 @@ func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{
 	if len(rows) == 0 {
 		return
 	}
-	docs := p.convertDocs(rows)
+	docs := es.convertDocs(rows)
 	for {
-		if docs = p.bulkCreate(index, docs); len(docs) == 0 {
+		if docs = es.bulkCreate(index, docs); len(docs) == 0 {
 			break
 		}
 
@@ -68,11 +68,11 @@ func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{
 	}
 }
 
-func (p *Pusher) convertDocs(docs []map[string]interface{}) [][2]interface{} {
+func (es *ElasticSearch) convertDocs(docs []map[string]interface{}) [][2]interface{} {
 	data := [][2]interface{}{}
 	for _, doc := range docs {
 		if id, err := genUUID(); err != nil {
-			p.logger.Errorf("generate uuid error: %v", err)
+			es.logger.Errorf("generate uuid error: %v", err)
 			data = append(data, [2]interface{}{nil, doc})
 		} else {
 			data = append(data, [2]interface{}{id, doc})

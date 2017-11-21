@@ -6,7 +6,7 @@ import (
 )
 
 type Output interface {
-	Write(rows []map[string]interface{}) (fatalError bool)
+	Write(rows []map[string]interface{}) (ok bool)
 }
 
 // Different collector must use separate output. Because output has internal state.

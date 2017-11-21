@@ -1,20 +1,18 @@
 package time_series_index
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/lovego/xiaomei/utils/elastic"
-	"github.com/lovego/xiaomei/utils/httputil"
 )
 
 func (tsi TimeSeriesIndex) Prune(client *elastic.ES) {
 	if tsi.keep <= 0 {
 		return
 	}
-	indices := tsi.getIndices(client.BaseAddrs[0])
+	indices := tsi.getIndices(client)
 	if len(indices) <= tsi.keep {
 		return
 	}
@@ -26,25 +24,44 @@ func (tsi TimeSeriesIndex) Prune(client *elastic.ES) {
 	}
 }
 
-func (tsi TimeSeriesIndex) getIndices(baseAddr string) (indices []string) {
-	uri, err := url.Parse(baseAddr)
-	if err != nil {
-		tsi.logger.Errorf("parse es addr %s error: %v", baseAddr, err)
+func (tsi TimeSeriesIndex) getIndices(client *elastic.ES) (indices []string) {
+	indicesList := tsi.catIndices(client)
+	if len(indicesList) == 0 {
 		return
 	}
-
-	indicesData := tsi.catIndices(*uri)
-	if len(indicesData) == 0 {
-		return
-	}
-	for _, data := range indicesData {
-		index := strings.TrimPrefix(data.Index, uri.Path)
+	for _, index := range indicesList {
 		if tsi.match(index) {
 			indices = append(indices, index)
 		}
 	}
 	if len(indices) == 0 {
 		tsi.logger.Errorf("no indices matches: %s<%s>%s", tsi.prefix, tsi.timeLayout, tsi.suffix)
+	}
+	return
+}
+
+func (tsi TimeSeriesIndex) catIndices(client *elastic.ES) (indices []string) {
+	uri, err := url.Parse(client.BaseAddrs[0])
+	if err != nil {
+		tsi.logger.Errorf("parse es addr %s error: %v", client.BaseAddrs[0], err)
+		return
+	}
+	pattern := uri.Path + tsi.prefix + `*` + tsi.suffix // uri.Path: /logc-dev-
+
+	var result []struct {
+		Index string `json:"index"`
+	}
+	query := "/_cat/indices" + pattern + "?format=json&h=index&s=index:desc"
+	if err := client.RootGet(query, nil, &result); err != nil {
+		tsi.logger.Errorf("%s error: %+v\n", query, err)
+		return
+	}
+	if len(result) == 0 {
+		tsi.logger.Errorf("no indices matches: %s", pattern)
+	}
+	prefix := strings.TrimPrefix(uri.Path, `/`)
+	for _, data := range result {
+		indices = append(indices, strings.TrimPrefix(data.Index, prefix))
 	}
 	return
 }
@@ -58,27 +75,4 @@ func (tsi TimeSeriesIndex) match(index string) bool {
 	timeStr := index[len(tsi.prefix) : len(index)-len(tsi.suffix)]
 	_, err := time.Parse(tsi.timeLayout, timeStr)
 	return err == nil
-}
-
-type indexData struct {
-	Index string `json:"index"`
-}
-
-func (tsi TimeSeriesIndex) catIndices(uri url.URL) (result []indexData) {
-	// uri.Path: /logc-dev-
-	pattern := uri.Path + tsi.prefix + `*` + tsi.suffix
-
-	// http://log-es.wumart.com/_cat/indices/logc-dev-*?h=index&s=index:desc
-	uri.Path = fmt.Sprintf("/_cat/indices%s", pattern)
-	uri.RawQuery = `format=json&h=index&s=index:desc`
-	uriStr := uri.String()
-
-	if err := httputil.GetJson(uriStr, nil, nil, &result); err != nil {
-		tsi.logger.Errorf("GET %s error: %+v\n", uriStr, err)
-		return
-	}
-	if len(result) == 0 {
-		tsi.logger.Errorf("no indices matches: %s", pattern)
-	}
-	return
 }

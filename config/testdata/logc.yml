@@ -25,7 +25,7 @@ defaults: &defaults
       outputs:
         - "@type": elastic-search
           addrs:
-            - http://log-es.wumart.com/logc-dev-
+            - http://log-es.com/logc-dev-
 
           # index can be time series index or regular index.
           # time series index, string between "<" and ">" acts as layout.
@@ -46,7 +46,7 @@ defaults: &defaults
       outputs:
         - "@type": elastic-search
           addrs:
-            - http://log-es.wumart.com/logc-dev-
+            - http://log-es.com/logc-dev-
           index: app-<2006.01.02>-err
           type: app-err
           mapping: *mapping
@@ -55,7 +55,7 @@ defaults: &defaults
       outputs:
         - "@type": elastic-search
           addrs:
-            - http://log-es.wumart.com/logc-dev-
+            - http://log-es.com/logc-dev-
           index: test-consume
           type: consume-log
           mapping: *mappingConsume

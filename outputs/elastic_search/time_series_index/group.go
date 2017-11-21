@@ -9,13 +9,11 @@ type Rows struct {
 	Rows  []map[string]interface{}
 }
 
-func (tsi *TimeSeriesIndex) Group(rows []map[string]interface{}) (
-	result []Rows, fatalError bool,
-) {
+func (tsi *TimeSeriesIndex) Group(rows []map[string]interface{}) (result []Rows) {
 	indices := []string{}
 	m := make(map[string][]map[string]interface{})
 	for _, row := range rows {
-		if index := tsi.Get(row); index != `` {
+		if index := tsi.Of(row); index != `` {
 			if m[index] == nil {
 				m[index] = []map[string]interface{}{row}
 				indices = append(indices, index)
@@ -23,7 +21,7 @@ func (tsi *TimeSeriesIndex) Group(rows []map[string]interface{}) (
 				m[index] = append(m[index], row)
 			}
 		} else {
-			return nil, true
+			return nil
 		}
 	}
 	for _, index := range indices {
@@ -32,7 +30,7 @@ func (tsi *TimeSeriesIndex) Group(rows []map[string]interface{}) (
 	return
 }
 
-func (tsi TimeSeriesIndex) Get(row map[string]interface{}) string {
+func (tsi TimeSeriesIndex) Of(row map[string]interface{}) string {
 	value, ok := row[tsi.timeField].(string)
 	if !ok {
 		tsi.logger.Errorf("non string timeField %s: %v", tsi.timeField, row[tsi.timeField])
@@ -43,5 +41,9 @@ func (tsi TimeSeriesIndex) Get(row map[string]interface{}) string {
 		tsi.logger.Errorf("parse timeField %s with layout %s error: %v", tsi.timeField, tsi.timeFormat, err)
 		return ``
 	}
-	return tsi.prefix + at.Format(tsi.timeLayout) + tsi.suffix
+	return tsi.Get(at)
+}
+
+func (tsi TimeSeriesIndex) Get(t time.Time) string {
+	return tsi.prefix + t.Format(tsi.timeLayout) + tsi.suffix
 }

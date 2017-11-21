@@ -55,7 +55,7 @@ func getTestExpectConfig() Config {
 				Path: "app.log",
 				Outputs: []map[string]interface{}{{
 					"@type":      "elastic-search",
-					"addrs":      []interface{}{"http://log-es.wumart.com/logc-dev-"},
+					"addrs":      []interface{}{"http://log-es.com/logc-dev-"},
 					"index":      "app-<2006.01.02>",
 					"indexKeep":  3,
 					"type":       "app-log",
@@ -68,7 +68,7 @@ func getTestExpectConfig() Config {
 				Path: "app.err",
 				Outputs: []map[string]interface{}{{
 					"@type":     "elastic-search",
-					"addrs":     []interface{}{"http://log-es.wumart.com/logc-dev-"},
+					"addrs":     []interface{}{"http://log-es.com/logc-dev-"},
 					"index":     "app-<2006.01.02>-err",
 					"type":      "app-err",
 					"mapping":   mapping,
@@ -79,7 +79,7 @@ func getTestExpectConfig() Config {
 				Path: "consume.log",
 				Outputs: []map[string]interface{}{{
 					"@type": "elastic-search",
-					"addrs": []interface{}{"http://log-es.wumart.com/logc-dev-"},
+					"addrs": []interface{}{"http://log-es.com/logc-dev-"},
 					"index": "test-consume",
 					"type":  "consume-log",
 					"mapping": map[interface{}]interface{}{

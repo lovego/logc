@@ -1,18 +1,14 @@
 package elastic_search
 
 import (
-	"net/http"
-
 	"github.com/lovego/logc/outputs/elastic_search/time_series_index"
 	"github.com/lovego/xiaomei/utils/elastic"
-	"github.com/lovego/xiaomei/utils/httputil"
 	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 	"github.com/spf13/cast"
 )
 
 type ElasticSearch struct {
 	file    string
-	logger  *loggerpkg.Logger
 	addrs   []string
 	index   string
 	typ     string
@@ -21,6 +17,7 @@ type ElasticSearch struct {
 
 	timeSeriesIndex *time_series_index.TimeSeriesIndex
 	currentIndex    string
+	logger          *loggerpkg.Logger
 }
 
 func New(conf map[string]interface{}, file string, logger *loggerpkg.Logger) *ElasticSearch {
@@ -40,14 +37,15 @@ func New(conf map[string]interface{}, file string, logger *loggerpkg.Logger) *El
 		return nil
 	}
 
-	es.client = elastic.New2(&httputil.Client{Client: http.DefaultClient}, es.addrs...)
-
 	if tsi, err := time_series_index.New(
 		es.index, timeField, timeFormat, indexKeep, logger,
 	); err == nil {
 		es.timeSeriesIndex = tsi
 	} else {
 		logger.Errorf("elastic-search(%s) config: %v", es.file, err)
+		return nil
+	}
+	if !es.setupIndex() {
 		return nil
 	}
 

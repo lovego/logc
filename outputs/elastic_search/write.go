@@ -7,28 +7,28 @@ import (
 	"github.com/nu7hatch/gouuid"
 )
 
-func (es *ElasticSearch) Write(rows []map[string]interface{}) (fatalError bool) {
+func (es *ElasticSearch) Write(rows []map[string]interface{}) bool {
 	if len(rows) == 0 {
-		return false
+		return true
 	}
 	if es.timeSeriesIndex == nil {
 		es.writeToIndex(es.index, rows)
-		return false
+		return true
 	}
 
 	return es.writeToTimeSeriesIndex(rows)
 }
 
-func (es *ElasticSearch) writeToTimeSeriesIndex(rows []map[string]interface{}) (fatalError bool) {
-	indicesRows, fatalError := es.timeSeriesIndex.Group(rows)
-	if fatalError {
-		return true
+func (es *ElasticSearch) writeToTimeSeriesIndex(rows []map[string]interface{}) bool {
+	indicesRows := es.timeSeriesIndex.Group(rows)
+	if len(indicesRows) <= 0 {
+		return false
 	}
 	prune := false
 	for _, one := range indicesRows {
 		if one.Index != es.currentIndex {
-			if es.ensureIndex(one.Index) {
-				return true
+			if !es.ensureIndex(one.Index) {
+				return false
 			}
 			es.currentIndex = one.Index
 			prune = true
@@ -38,7 +38,7 @@ func (es *ElasticSearch) writeToTimeSeriesIndex(rows []map[string]interface{}) (
 	if prune {
 		es.timeSeriesIndex.Prune(es.client)
 	}
-	return false
+	return true
 }
 
 func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{}) {
@@ -50,17 +50,8 @@ func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{
 		if docs = es.bulkCreate(index, docs); len(docs) == 0 {
 			break
 		}
-
-		var interval time.Duration
-		const max = 10 * time.Minute
-		if interval <= 0 {
-			interval = time.Second
-		} else if interval < max {
-			if interval *= 2; interval > max {
-				interval = max
-			}
-		}
-		time.Sleep(interval)
+		var t Timer
+		t.Sleep()
 	}
 }
 
@@ -83,4 +74,20 @@ func genUUID() (string, error) {
 	} else {
 		return strings.Replace(uid.String(), `-`, ``, -1), nil
 	}
+}
+
+type Timer struct {
+	duration time.Duration
+}
+
+func (t *Timer) Sleep() {
+	const max = 10 * time.Minute
+	if t.duration <= 0 {
+		t.duration = time.Second
+	} else if t.duration < max {
+		if t.duration *= 2; t.duration > max {
+			t.duration = max
+		}
+	}
+	time.Sleep(t.duration)
 }

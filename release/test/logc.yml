@@ -1,11 +1,11 @@
 envs:
   dev:
     elasticsearch:
-      - http://log-es.wumart.com/logc-dev-
+      - http://log-es.com/logc-dev-
     <<: *defaults
   demo:
     elasticsearch:
-      - http://log-es.wumart.com/logc-demo-
+      - http://log-es.com/logc-demo-
     <<: *defaults
   qa:
     elasticsearch:

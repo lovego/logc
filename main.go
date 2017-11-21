@@ -19,6 +19,7 @@ func main() {
 	conf := config.Get()
 	reader.Setup(conf.Batch, logger)
 	collector.Setup(logger, config.Alarm())
+	outputs.Setup(logger)
 
 	startRotate(conf.Rotate.Time, conf.Rotate.Cmd)
 

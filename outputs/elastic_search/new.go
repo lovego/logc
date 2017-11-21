@@ -80,14 +80,16 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 				return false
 			}
 		case `mapping`:
-			es.parseMapping(v)
-			return false
+			if !es.parseMapping(v) {
+				return false
+			}
 		case `indexKeep`:
 			if keep, ok := v.(int); ok {
 				*indexKeep = keep
+			} else {
+				es.logger.Errorf(`elastic-search(%s): indexKeep should be an integer.`, es.file)
+				return false
 			}
-			es.logger.Errorf(`elastic-search(%s): indexKeep should be an integer.`, es.file)
-			return false
 		default:
 			es.logger.Errorf(`elastic-search(%s) config: unknown key: %s.`, es.file, k)
 			return false

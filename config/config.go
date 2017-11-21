@@ -36,6 +36,9 @@ func (conf *Config) check() {
 		} else {
 			file.Path = filepath.Clean(file.Path)
 		}
+		if len(file.Outputs) == 0 {
+			log.Fatalf("%s: empty outputs", file.Path)
+		}
 		conf.Files[i] = file
 	}
 }

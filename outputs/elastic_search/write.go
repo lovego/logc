@@ -21,7 +21,7 @@ func (es *ElasticSearch) Write(rows []map[string]interface{}) bool {
 
 func (es *ElasticSearch) writeToTimeSeriesIndex(rows []map[string]interface{}) bool {
 	indicesRows := es.timeSeriesIndex.Group(rows)
-	if len(indicesRows) <= 0 {
+	if len(indicesRows) <= 0 { // Group encountered error.
 		return false
 	}
 	prune := false

@@ -41,7 +41,7 @@ func getLogcPath(path string, f *os.File) string {
 		logger.Errorf("unexpected FileInfo.Sys(): %#v", fi.Sys())
 		return ``
 	}
-	return filepath.Join(filepath.Dir(path), `logc`, strconv.FormatUint(sys.Ino, 10))
+	return filepath.Join(filepath.Dir(path), `.logc`, strconv.FormatUint(sys.Ino, 10))
 }
 
 func openLogFile(path string) *os.File {

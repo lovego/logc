@@ -14,7 +14,8 @@ func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]in
 		if err, ok := errs.(elastic.BulkError); ok {
 			return err.FailedItems()
 		}
-		es.logger.Error("push err is not elastic.BulkError type, but %T", errs)
+		es.logger.Errorf("bulkCreate err: %v", errs)
+		return docs
 	}
 	return nil
 }

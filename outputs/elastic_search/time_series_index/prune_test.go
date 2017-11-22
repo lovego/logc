@@ -2,13 +2,11 @@ package time_series_index
 
 import (
 	"log"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/lovego/xiaomei/utils/elastic"
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 )
 
 var testES = elastic.New(`http://log-es.com/logc-test-`)
@@ -19,7 +17,7 @@ var testIndices = []string{
 }
 
 var testTimeSeriesIndex = TimeSeriesIndex{
-	prefix: `log-`, timeLayout: `2006.01`, logger: loggerpkg.New(``, os.Stderr, nil), keep: 6,
+	prefix: `log-`, timeLayout: `2006.01`, logger: testLogger, keep: 6,
 }
 
 func TestPrune(t *testing.T) {

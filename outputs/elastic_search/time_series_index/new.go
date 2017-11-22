@@ -48,5 +48,6 @@ func New(index, timeField, timeFormat string, keep int, logger *loggerpkg.Logger
 		timeField:  timeField,
 		timeFormat: timeFormat,
 		keep:       keep,
+		logger:     logger,
 	}, nil
 }

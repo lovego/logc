@@ -20,6 +20,8 @@ func (tsi TimeSeriesIndex) Prune(client *elastic.ES) {
 	for _, index := range obsoletes {
 		if err := client.Delete(index, nil); err != nil {
 			tsi.logger.Errorf("delete index %s error: %s", index, err)
+		} else {
+			tsi.logger.Printf("pruned index: %s", index)
 		}
 	}
 }

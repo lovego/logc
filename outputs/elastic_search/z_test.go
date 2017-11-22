@@ -3,6 +3,7 @@ package elastic_search
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/lovego/logc/outputs/elastic_search/time_series_index"
 	"github.com/lovego/xiaomei/utils/elastic"
@@ -36,8 +37,8 @@ var testMapping = map[string]map[string]interface{}{
 
 var testLogger = loggerpkg.New(``, os.Stderr, nil)
 
-var testTsi1, _ = time_series_index.New("app-<2006.01.02>", `at`, "2006-01-02T15:04:05Z0700", 0, testLogger)
-var testTsi2, _ = time_series_index.New("app-<2006.01.02>", `at`, "2006-01-02T15:04:05Z0700", 3, testLogger)
+var testTsi1, _ = time_series_index.New("app-<2006.01.02>", `at`, time.RFC3339, 0, testLogger)
+var testTsi2, _ = time_series_index.New("app-<2006.01.02>", `at`, time.RFC3339, 3, testLogger)
 
 var testES1 = &ElasticSearch{
 	file:            `test.log`,

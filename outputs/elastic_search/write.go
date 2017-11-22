@@ -2,7 +2,6 @@ package elastic_search
 
 import (
 	"strings"
-	"time"
 
 	"github.com/nu7hatch/gouuid"
 )
@@ -46,11 +45,11 @@ func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{
 		return
 	}
 	docs := es.addDocId(rows)
+	var t Timer
 	for {
 		if docs = es.bulkCreate(index, docs); len(docs) == 0 {
 			break
 		}
-		var t Timer
 		t.Sleep()
 	}
 }
@@ -58,36 +57,12 @@ func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{
 func (es *ElasticSearch) addDocId(rows []map[string]interface{}) [][2]interface{} {
 	docs := [][2]interface{}{}
 	for _, doc := range rows {
-		if id, err := genUUID(); err != nil {
+		if uid, err := uuid.NewV4(); err != nil {
 			es.logger.Errorf("generate uuid error: %v", err)
 			docs = append(docs, [2]interface{}{nil, doc})
 		} else {
-			docs = append(docs, [2]interface{}{id, doc})
+			docs = append(docs, [2]interface{}{strings.Replace(uid.String(), `-`, ``, -1), doc})
 		}
 	}
 	return docs
-}
-
-func genUUID() (string, error) {
-	if uid, err := uuid.NewV4(); err != nil {
-		return ``, err
-	} else {
-		return strings.Replace(uid.String(), `-`, ``, -1), nil
-	}
-}
-
-type Timer struct {
-	duration time.Duration
-}
-
-func (t *Timer) Sleep() {
-	const max = 10 * time.Minute
-	if t.duration <= 0 {
-		t.duration = time.Second
-	} else if t.duration < max {
-		if t.duration *= 2; t.duration > max {
-			t.duration = max
-		}
-	}
-	time.Sleep(t.duration)
 }

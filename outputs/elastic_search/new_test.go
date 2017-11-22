@@ -50,7 +50,7 @@ func getNewTestCases() []testCaseT {
 				"type":       "app-log",
 				"mapping":    mappingIfc,
 				"timeField":  "at",
-				"timeFormat": "2006-01-02T15:04:05Z0700",
+				"timeFormat": "2006-01-02T15:04:05Z07:00",
 				"indexKeep":  3,
 			},
 			expect: testES2,

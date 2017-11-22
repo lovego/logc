@@ -35,7 +35,7 @@ defaults: &defaults
 
           # the number of latest time series indices to keep. old indices will be deleted.
           # effective only when "index" field is a time series index.
-          indexKeep: 3
+          indexKeep: 100
 
           type: app-log
           mapping: *mapping

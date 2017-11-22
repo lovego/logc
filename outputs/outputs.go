@@ -5,10 +5,11 @@ import (
 	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 )
 
-var logger *loggerpkg.Logger
+var theLogger *loggerpkg.Logger
 
-func Setup(l *loggerpkg.Logger) {
-	logger = l
+func Setup(logger *loggerpkg.Logger) {
+	theLogger = logger
+	elastic_search.Setup(logger)
 }
 
 type Output interface {
@@ -16,8 +17,8 @@ type Output interface {
 }
 
 // Different collector must use separate output. Because output has internal state.
-// For example. elastic_search has currentIndex state, it is designed only one file in mind.
-// So, when a collector is constucted, use a maker to make a new ouput.
+// For example, elastic_search has currentIndex state, it's designed having only one file in mind.
+// So, when a collector is constructed, use a maker to make a new ouput.
 func Maker(conf map[string]interface{}, file string) func(*loggerpkg.Logger) Output {
 	typ := getType(conf, file)
 	if typ == `` {
@@ -38,7 +39,7 @@ func New(typ string, conf map[string]interface{}, file string, logger *loggerpkg
 			return nil
 		}
 	default:
-		logger.Errorf("unknown output @type: %v", typ)
+		theLogger.Errorf("unknown output @type: %v", typ)
 		return nil
 	}
 }
@@ -46,19 +47,19 @@ func New(typ string, conf map[string]interface{}, file string, logger *loggerpkg
 func getType(conf map[string]interface{}, file string) string {
 	typeV := conf[`@type`]
 	if typeV == nil {
-		logger.Fatalf("%s: no @type defined.", file)
+		theLogger.Fatalf("%s: no @type defined.", file)
 		return ``
 	}
 	typ, ok := typeV.(string)
 	if !ok {
-		logger.Fatalf("%s: non string @type defined.", file)
+		theLogger.Fatalf("%s: non string @type defined.", file)
 		return ``
 	}
 	switch typ {
 	case `elastic-search`:
 		return typ
 	default:
-		logger.Fatalf("%s: unknown @type: %s .", file, typ)
+		theLogger.Fatalf("%s: unknown @type: %s .", file, typ)
 		return ``
 	}
 }

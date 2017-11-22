@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"log"
 	"os/exec"
 
 	"github.com/lovego/logc/collector"
@@ -25,7 +24,6 @@ func main() {
 
 	collectorMakers := getCollectorMakers(conf.Files)
 
-	log.Printf("logc starting.\n")
 	watch.Watch(collectorMakers)
 }
 

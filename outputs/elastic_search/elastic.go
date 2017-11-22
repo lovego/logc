@@ -6,6 +6,7 @@ import (
 
 	"github.com/lovego/xiaomei/utils/elastic"
 	"github.com/lovego/xiaomei/utils/httputil"
+	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 )
 
 // TODO: more error type retry
@@ -23,21 +24,28 @@ func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]in
 func (es *ElasticSearch) setupIndex() bool {
 	es.client = elastic.New2(&httputil.Client{Client: http.DefaultClient}, es.addrs...)
 	if es.timeSeriesIndex == nil {
-		return es.ensureIndex(es.index)
+		return es.ensureIndex(es.index, theLogger)
 	} else {
-		return es.ensureIndex(es.timeSeriesIndex.Get(time.Now()))
+		return es.ensureIndex(es.timeSeriesIndex.Get(time.Now()), theLogger)
 	}
 }
 
-func (es *ElasticSearch) ensureIndex(index string) bool {
-	if err := es.client.Ensure(index, nil); err != nil {
-		es.logger.Errorf("ensure index %s error: %+v\n", index, err)
+func (es *ElasticSearch) ensureIndex(index string, logger *loggerpkg.Logger) bool {
+	es.logger.Printf("check index: %s", index)
+	if ok, err := es.client.Exist(index); err != nil {
+		logger.Errorf("check index %s existence error: %+v\n", index, err)
 		return false
+	} else if !ok {
+		es.logger.Printf("create index: %s", index)
+		if err := es.client.Put(index, nil, nil); err != nil {
+			logger.Errorf("create index %s error: %+v\n", index, err)
+			return false
+		}
 	}
 	if err := es.client.Put(index+`/_mapping/`+es.typ, map[string]interface{}{
 		`properties`: es.mapping,
 	}, nil); err != nil {
-		es.logger.Errorf("put mapping %s/%s error: %+v\n", index, es.typ, err)
+		logger.Errorf("put mapping %s/%s error: %+v\n", index, es.typ, err)
 		return false
 	}
 	return true

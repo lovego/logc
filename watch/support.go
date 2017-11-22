@@ -18,28 +18,25 @@ func getCollectors(collectorMakers map[string]func() []Collector) map[string][]C
 	return collectorsMap
 }
 
-func getWatcher(paths map[string]bool) *fsnotify.Watcher {
+func getDirsWatcher(collectorMakers map[string]func() []Collector) *fsnotify.Watcher {
+	dirs := make(map[string]bool)
+	for path := range collectorMakers {
+		dirs[filepath.Dir(path)] = true
+	}
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal("fsnotify.NewWatcher error: %v\n", err)
 	}
 
-	for path := range paths {
-		if err := watcher.Add(path); err == nil {
-			log.Printf("watch %s ", path)
+	for dir := range dirs {
+		if err := watcher.Add(dir); err == nil {
+			log.Printf("watch %s ", dir)
 		} else {
-			log.Printf("watcher.Add %s error: %v\n", path, err)
+			log.Printf("watcher.Add %s error: %v\n", dir, err)
 		}
 	}
 	return watcher
-}
-
-func getDirs(collectorsMap map[string][]Collector) map[string]bool {
-	m := make(map[string]bool)
-	for path := range collectorsMap {
-		m[filepath.Dir(path)] = true
-	}
-	return m
 }
 
 func openedSameFile(collectors []Collector, fi os.FileInfo) bool {

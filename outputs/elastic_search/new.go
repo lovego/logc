@@ -7,6 +7,12 @@ import (
 	"github.com/spf13/cast"
 )
 
+var theLogger *loggerpkg.Logger
+
+func Setup(logger *loggerpkg.Logger) {
+	theLogger = logger
+}
+
 type ElasticSearch struct {
 	file    string
 	addrs   []string
@@ -22,7 +28,7 @@ type ElasticSearch struct {
 
 func New(conf map[string]interface{}, file string, logger *loggerpkg.Logger) *ElasticSearch {
 	if len(conf) == 0 {
-		logger.Errorf(`elastic-search(%s): empty config.`, file)
+		theLogger.Errorf(`elastic-search(%s): empty config.`, file)
 		return nil
 	}
 
@@ -42,7 +48,7 @@ func New(conf map[string]interface{}, file string, logger *loggerpkg.Logger) *El
 	); err == nil {
 		es.timeSeriesIndex = tsi
 	} else {
-		logger.Errorf("elastic-search(%s) config: %v", es.file, err)
+		theLogger.Errorf("elastic-search(%s) config: %v", es.file, err)
 		return nil
 	}
 	if !es.setupIndex() {
@@ -60,7 +66,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 			if addrs, err := cast.ToStringSliceE(v); err == nil {
 				es.addrs = addrs
 			} else {
-				es.logger.Errorf(`elastic-search(%s) config: addrs should be an string array.`, es.file)
+				theLogger.Errorf(`elastic-search(%s) config: addrs should be an string array.`, es.file)
 				return false
 			}
 		case `index`, `type`, `timeField`, `timeFormat`:
@@ -76,7 +82,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 					*timeFormat = value
 				}
 			} else {
-				es.logger.Errorf(`elastic-search(%s) config: %s should be a string.`, es.file, k)
+				theLogger.Errorf(`elastic-search(%s) config: %s should be a string.`, es.file, k)
 				return false
 			}
 		case `mapping`:
@@ -87,11 +93,12 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 			if keep, ok := v.(int); ok {
 				*indexKeep = keep
 			} else {
-				es.logger.Errorf(`elastic-search(%s): indexKeep should be an integer.`, es.file)
+				theLogger.Errorf(`elastic-search(%s): indexKeep should be an integer.`, es.file)
 				return false
 			}
+		case `@type`:
 		default:
-			es.logger.Errorf(`elastic-search(%s) config: unknown key: %s.`, es.file, k)
+			theLogger.Errorf(`elastic-search(%s) config: unknown key: %s.`, es.file, k)
 			return false
 		}
 	}
@@ -101,7 +108,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 func (es *ElasticSearch) parseMapping(v interface{}) bool {
 	m, ok := v.(map[interface{}]interface{})
 	if !ok {
-		es.logger.Errorf(`elastic-search(%s) config: mapping should be a map.`, es.file)
+		theLogger.Errorf(`elastic-search(%s) config: mapping should be a map.`, es.file)
 		return false
 	}
 
@@ -109,12 +116,12 @@ func (es *ElasticSearch) parseMapping(v interface{}) bool {
 	for k, v := range m {
 		kk, ok := k.(string)
 		if !ok {
-			es.logger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.file)
+			theLogger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.file)
 			return false
 		}
 		vv, ok := v.(map[interface{}]interface{})
 		if !ok {
-			es.logger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.file)
+			theLogger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.file)
 			return false
 		}
 		mapping[kk] = convertMapKeyToStr(vv)
@@ -125,15 +132,15 @@ func (es *ElasticSearch) parseMapping(v interface{}) bool {
 
 func (es *ElasticSearch) checkConf() bool {
 	if len(es.addrs) == 0 {
-		es.logger.Errorf(`elastic-search(%s) config: addrs is emtpty.`, es.file)
+		theLogger.Errorf(`elastic-search(%s) config: addrs is emtpty.`, es.file)
 		return false
 	}
 	if es.index == `` {
-		es.logger.Errorf(`elastic-search(%s) config: empty index.`, es.file)
+		theLogger.Errorf(`elastic-search(%s) config: empty index.`, es.file)
 		return false
 	}
 	if es.typ == `` {
-		es.logger.Errorf(`elastic-search(%s): empty type.`, es.file)
+		theLogger.Errorf(`elastic-search(%s): empty type.`, es.file)
 		return false
 	}
 	return true

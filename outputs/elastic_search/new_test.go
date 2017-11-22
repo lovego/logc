@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+func init() {
+	theLogger = testLogger
+}
+
 func TestNew(t *testing.T) {
 	for _, tc := range getNewTestCases() {
 		got := New(tc.input, `test.log`, testLogger)

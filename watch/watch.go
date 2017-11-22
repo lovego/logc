@@ -30,8 +30,10 @@ type Collector interface {
 
 func Watch(collectorMakers map[string]func() []Collector) {
 	collectorsMap := getCollectors(collectorMakers)
-	dirsWatcher := getWatcher(getDirs(collectorsMap))
+	dirsWatcher := getDirsWatcher(collectorMakers)
 	defer dirsWatcher.Close()
+
+	log.Printf("logc started.\n")
 
 	for {
 		select {

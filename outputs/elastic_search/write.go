@@ -26,7 +26,7 @@ func (es *ElasticSearch) writeToTimeSeriesIndex(rows []map[string]interface{}) b
 	prune := false
 	for _, one := range indicesRows {
 		if one.Index != es.currentIndex {
-			if !es.ensureIndex(one.Index) {
+			if !es.ensureIndex(one.Index, es.logger) {
 				return false
 			}
 			es.currentIndex = one.Index

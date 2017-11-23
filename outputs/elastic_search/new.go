@@ -14,25 +14,25 @@ func Setup(logger *loggerpkg.Logger) {
 }
 
 type ElasticSearch struct {
-	file    string
-	addrs   []string
-	index   string
-	typ     string
-	mapping map[string]map[string]interface{}
-	client  *elastic.ES
+	collectorId string
+	addrs       []string
+	index       string
+	typ         string
+	mapping     map[string]map[string]interface{}
+	client      *elastic.ES
 
 	timeSeriesIndex *time_series_index.TimeSeriesIndex
 	currentIndex    string
 	logger          *loggerpkg.Logger
 }
 
-func New(conf map[string]interface{}, file string, logger *loggerpkg.Logger) *ElasticSearch {
+func New(collectorId string, conf map[string]interface{}, logger *loggerpkg.Logger) *ElasticSearch {
 	if len(conf) == 0 {
-		theLogger.Errorf(`elastic-search(%s): empty config.`, file)
+		theLogger.Errorf(`elastic-search(%s): empty config.`, collectorId)
 		return nil
 	}
 
-	es := &ElasticSearch{file: file, logger: logger}
+	es := &ElasticSearch{collectorId: collectorId, logger: logger}
 
 	var timeField, timeFormat string
 	var indexKeep int
@@ -48,7 +48,7 @@ func New(conf map[string]interface{}, file string, logger *loggerpkg.Logger) *El
 	); err == nil {
 		es.timeSeriesIndex = tsi
 	} else {
-		theLogger.Errorf("elastic-search(%s) config: %v", es.file, err)
+		theLogger.Errorf("elastic-search(%s) config: %v", es.collectorId, err)
 		return nil
 	}
 	if !es.setupIndex() {
@@ -66,7 +66,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 			if addrs, err := cast.ToStringSliceE(v); err == nil {
 				es.addrs = addrs
 			} else {
-				theLogger.Errorf(`elastic-search(%s) config: addrs should be an string array.`, es.file)
+				theLogger.Errorf(`elastic-search(%s) config: addrs should be an string array.`, es.collectorId)
 				return false
 			}
 		case `index`, `type`, `timeField`, `timeFormat`:
@@ -82,7 +82,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 					*timeFormat = value
 				}
 			} else {
-				theLogger.Errorf(`elastic-search(%s) config: %s should be a string.`, es.file, k)
+				theLogger.Errorf(`elastic-search(%s) config: %s should be a string.`, es.collectorId, k)
 				return false
 			}
 		case `mapping`:
@@ -93,12 +93,12 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 			if keep, ok := v.(int); ok {
 				*indexKeep = keep
 			} else {
-				theLogger.Errorf(`elastic-search(%s): indexKeep should be an integer.`, es.file)
+				theLogger.Errorf(`elastic-search(%s) config: indexKeep should be an integer.`, es.collectorId)
 				return false
 			}
-		case `@type`:
+		case `@collectorId`, `@type`:
 		default:
-			theLogger.Errorf(`elastic-search(%s) config: unknown key: %s.`, es.file, k)
+			theLogger.Errorf(`elastic-search(%s) config: unknown key: %s.`, es.collectorId, k)
 			return false
 		}
 	}
@@ -108,7 +108,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 func (es *ElasticSearch) parseMapping(v interface{}) bool {
 	m, ok := v.(map[interface{}]interface{})
 	if !ok {
-		theLogger.Errorf(`elastic-search(%s) config: mapping should be a map.`, es.file)
+		theLogger.Errorf(`elastic-search(%s) config: mapping should be a map.`, es.collectorId)
 		return false
 	}
 
@@ -116,12 +116,12 @@ func (es *ElasticSearch) parseMapping(v interface{}) bool {
 	for k, v := range m {
 		kk, ok := k.(string)
 		if !ok {
-			theLogger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.file)
+			theLogger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.collectorId)
 			return false
 		}
 		vv, ok := v.(map[interface{}]interface{})
 		if !ok {
-			theLogger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.file)
+			theLogger.Errorf(`elastic-search(%s) config: invalid mapping.`, es.collectorId)
 			return false
 		}
 		mapping[kk] = convertMapKeyToStr(vv)
@@ -132,15 +132,15 @@ func (es *ElasticSearch) parseMapping(v interface{}) bool {
 
 func (es *ElasticSearch) checkConf() bool {
 	if len(es.addrs) == 0 {
-		theLogger.Errorf(`elastic-search(%s) config: addrs is emtpty.`, es.file)
+		theLogger.Errorf(`elastic-search(%s) config: addrs is emtpty.`, es.collectorId)
 		return false
 	}
 	if es.index == `` {
-		theLogger.Errorf(`elastic-search(%s) config: empty index.`, es.file)
+		theLogger.Errorf(`elastic-search(%s) config: index is empty.`, es.collectorId)
 		return false
 	}
 	if es.typ == `` {
-		theLogger.Errorf(`elastic-search(%s): empty type.`, es.file)
+		theLogger.Errorf(`elastic-search(%s) config: type is empty.`, es.collectorId)
 		return false
 	}
 	return true

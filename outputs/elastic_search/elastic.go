@@ -11,7 +11,7 @@ import (
 
 // TODO: more error type retry
 func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]interface{} {
-	if errs := es.client.BulkCreate(index+`/`+es.typ, docs); errs != nil {
+	if errs := es.client.BulkIndex(index+`/`+es.typ, docs); errs != nil {
 		if err, ok := errs.(elastic.BulkError); ok {
 			return err.FailedItems()
 		}

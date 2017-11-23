@@ -27,20 +27,19 @@ func main() {
 	watch.Watch(collectorMakers)
 }
 
-func getCollectorMakers(files []config.File) map[string]func() []watch.Collector {
+func getCollectorMakers(files map[string]map[string]map[string]interface{}) map[string]func() []watch.Collector {
 	makers := make(map[string]func() []watch.Collector)
-	for _, file := range files {
-		makers[file.Path] = getCollectorsMaker(file)
+	for path, collectorsConf := range files {
+		makers[path] = getCollectorsMaker(path, collectorsConf)
 	}
 	return makers
 }
 
-func getCollectorsMaker(file config.File) func() []watch.Collector {
-	// outputs.CheckConfig(file.Path, file.Outputs)
+func getCollectorsMaker(path string, collectorsConf map[string]map[string]interface{}) func() []watch.Collector {
 	return func() (collectors []watch.Collector) {
-		for _, outputConf := range file.Outputs {
-			if outputMaker := outputs.Maker(outputConf, file.Path); outputMaker != nil {
-				if c := collector.New(file.Path, outputMaker); c != nil {
+		for collectorId, outputConf := range collectorsConf {
+			if outputMaker := outputs.Maker(path+`:`+collectorId, outputConf); outputMaker != nil {
+				if c := collector.New(path, collectorId, outputMaker); c != nil {
 					collectors = append(collectors, c)
 				}
 			}

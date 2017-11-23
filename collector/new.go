@@ -24,10 +24,10 @@ type Collector struct {
 	closeEvent chan struct{}
 }
 
-func New(path string, outputMaker func(*loggerpkg.Logger) outputs.Output) *Collector {
+func New(path, collectorId string, outputMaker func(*loggerpkg.Logger) outputs.Output) *Collector {
 	var file, logFile *os.File
 	if file = openFile(path); file != nil {
-		if logcPath := getLogcPath(path, file); logcPath != `` {
+		if logcPath := getLogcPath(path, collectorId, file); logcPath != `` {
 			if logFile := openLogFile(logcPath + `.log`); logFile != nil {
 				logger := loggerpkg.New(``, logFile, theAlarm)
 				logger.Printf("collect %s", path)

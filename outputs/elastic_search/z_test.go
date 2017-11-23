@@ -41,7 +41,7 @@ var testTsi1, _ = time_series_index.New("app-<2006.01.02>", `at`, time.RFC3339, 
 var testTsi2, _ = time_series_index.New("app-<2006.01.02>", `at`, time.RFC3339, 3, testLogger)
 
 var testES1 = &ElasticSearch{
-	file:            `test.log`,
+	collectorId:     `test.log`,
 	addrs:           testEsAddrs,
 	index:           "app-<2006.01.02>",
 	typ:             "app-log",
@@ -52,7 +52,7 @@ var testES1 = &ElasticSearch{
 }
 
 var testES2 = &ElasticSearch{
-	file:            `test.log`,
+	collectorId:     `test.log`,
 	addrs:           testEsAddrs,
 	index:           "app-<2006.01.02>",
 	typ:             "app-log",
@@ -63,11 +63,11 @@ var testES2 = &ElasticSearch{
 }
 
 var testES3 = &ElasticSearch{
-	file:    `test.log`,
-	addrs:   testEsAddrs,
-	index:   "app-err",
-	typ:     "app-err",
-	mapping: testMapping,
-	client:  testEsClient,
-	logger:  testLogger,
+	collectorId: `test.log`,
+	addrs:       testEsAddrs,
+	index:       "app-err",
+	typ:         "app-err",
+	mapping:     testMapping,
+	client:      testEsClient,
+	logger:      testLogger,
 }

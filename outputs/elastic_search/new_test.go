@@ -11,7 +11,7 @@ func init() {
 
 func TestNew(t *testing.T) {
 	for _, tc := range getNewTestCases() {
-		got := New(tc.input, `test.log`, testLogger)
+		got := New(`test.log`, tc.input, testLogger)
 		expect := tc.expect
 		if !reflect.DeepEqual(got, expect) {
 			t.Fatalf("\ninput: %s\n expect: %+v\n    got: %+v\n", tc.input, tc.expect, got)

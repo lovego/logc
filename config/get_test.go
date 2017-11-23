@@ -10,7 +10,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	os.Args = []string{os.Args[0], `testdata/logc.yml`}
+	os.Args = []string{os.Args[0], `logc.yml`}
 	got := Get()
 	expect := getTestExpectConfig()
 
@@ -50,44 +50,41 @@ func getTestExpectConfig() Config {
 			Time: "33 8 1 * * *",
 			Cmd:  []string{"logrotate", "logrotate.conf"},
 		},
-		Files: []File{
-			{
-				Path: "app.log",
-				Outputs: []map[string]interface{}{{
+		Files: map[string]map[string]map[string]interface{}{
+			"app.log": {
+				"es": {
 					"@type":      "elastic-search",
 					"addrs":      []interface{}{"http://log-es.com/logc-dev-"},
-					"index":      "app-<2006.01.02>",
+					"index":      "app-log-<2006.01.02>",
 					"indexKeep":  3,
 					"type":       "app-log",
 					"mapping":    mapping,
 					"timeField":  "at",
 					"timeFormat": "2006-01-02T15:04:05Z0700",
-				}},
+				},
 			},
-			{
-				Path: "app.err",
-				Outputs: []map[string]interface{}{{
+			"app.err": {
+				"es": {
 					"@type":     "elastic-search",
 					"addrs":     []interface{}{"http://log-es.com/logc-dev-"},
-					"index":     "app-<2006.01.02>-err",
+					"index":     "app-err-<2006.01.02>",
 					"type":      "app-err",
 					"mapping":   mapping,
 					"timeField": "at",
-				}},
+				},
 			},
-			{
-				Path: "consume.log",
-				Outputs: []map[string]interface{}{{
+			"consume.log": {
+				"es": {
 					"@type": "elastic-search",
 					"addrs": []interface{}{"http://log-es.com/logc-dev-"},
-					"index": "test-consume",
+					"index": "consume-log",
 					"type":  "consume-log",
 					"mapping": map[interface{}]interface{}{
 						"at":   map[interface{}]interface{}{"type": "date"},
 						"data": map[interface{}]interface{}{"type": "object"},
 					},
 					"timeField": "at",
-				}},
+				},
 			},
 		},
 	}

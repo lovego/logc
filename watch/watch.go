@@ -59,7 +59,7 @@ func Watch(collectorMakers map[string]func() []Collector) {
 func handleRename(path string, collectorsMap map[string][]Collector) bool {
 	fi, err := os.Stat(path)
 	if err != nil {
-		log.Printf("watch: stat %s error: %v", path, err)
+		log.Printf("watch: %v", err)
 		return true
 	}
 	for oldPath, collectors := range collectorsMap {

@@ -33,15 +33,18 @@ defaults: &defaults
         # see https://golang.org/pkg/time/#Parse for time layout format.
         index: app-log-<2006.01.02>
 
-        # the number of latest time series indices to keep. old indices will be deleted.
-        # effective only when "index" field is a time series index.
-        indexKeep: 100
-
         type: app-log
         mapping: *mapping
+
+        ### the following fields is effective only when "index" field is a time series index. ###
+
+        # field used to determine which time series index to write to.
         timeField: at
         # time layout to parse "timeField". (default: RFC3339)
         timeFormat: "2006-01-02T15:04:05Z0700"
+        # the number of latest time series indices to keep. old indices will be deleted.
+        indexKeep: 100
+
     app.err:
       es:
         "@type": elastic-search

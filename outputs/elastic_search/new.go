@@ -1,8 +1,11 @@
 package elastic_search
 
 import (
+	"net/http"
+
 	"github.com/lovego/logc/outputs/elastic_search/time_series_index"
 	"github.com/lovego/xiaomei/utils/elastic"
+	"github.com/lovego/xiaomei/utils/httputil"
 	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 	"github.com/spf13/cast"
 )
@@ -51,7 +54,8 @@ func New(collectorId string, conf map[string]interface{}, logger *loggerpkg.Logg
 		theLogger.Errorf("elastic-search(%s) config: %v", es.collectorId, err)
 		return nil
 	}
-	if !es.setupIndex() {
+	es.client = elastic.New2(&httputil.Client{Client: http.DefaultClient}, es.addrs...)
+	if es.timeSeriesIndex == nil && !es.ensureIndex(es.index, theLogger) {
 		return nil
 	}
 

@@ -1,11 +1,7 @@
 package elastic_search
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/lovego/xiaomei/utils/elastic"
-	"github.com/lovego/xiaomei/utils/httputil"
 	loggerpkg "github.com/lovego/xiaomei/utils/logger"
 )
 
@@ -19,15 +15,6 @@ func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]in
 		return docs
 	}
 	return nil
-}
-
-func (es *ElasticSearch) setupIndex() bool {
-	es.client = elastic.New2(&httputil.Client{Client: http.DefaultClient}, es.addrs...)
-	if es.timeSeriesIndex == nil {
-		return es.ensureIndex(es.index, theLogger)
-	} else {
-		return es.ensureIndex(es.timeSeriesIndex.Get(time.Now()), theLogger)
-	}
 }
 
 func (es *ElasticSearch) ensureIndex(index string, logger *loggerpkg.Logger) bool {

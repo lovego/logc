@@ -29,7 +29,7 @@ func TestWrite1(t *testing.T) {
 func TestWrite2(t *testing.T) {
 	clearTestIndex(`app-err`, t)
 
-	if !testES3.setupIndex() {
+	if !testES3.ensureIndex(testES3.index, testLogger) {
 		t.Fatalf(`setup index failed.`)
 	}
 	if !testES3.Write(testRows) {

@@ -1,68 +1,57 @@
-envs:
-  dev:
-    <<: *defaults
-  demo:
-    <<: *defaults
-  qa:
-    <<: *defaults
-  production:
-    <<: *defaults
+name: test     # name used for alarm
+mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
+keepers: [  ]
+batch:
+  size: 102400 # how many bytes to read once
+  wait: 3s     # how long to wait to full fill batch.size
+rotate:
+  time: "33 8 1 * * *" # cron time pattern to execute rotate.cmd
+  cmd:  [ logrotate, logrotate.conf ]
+files:
+  app.log: # file path, required, either relative or absolute is ok.
+    # collector id, it will be use as part of offset file path, so it should be path safe.
+    # make sure different collectors of the same file has unique id.
+    es:
+      "@type": elastic-search
+      addrs: *addrs
 
-defaults: &defaults
-  name: test     # name used for alarm
-  mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
-  keepers: [  ]
-  batch:
-    size: 102400 # how many bytes to read once
-    wait: 3s     # how long to wait to full fill batch.size
-  rotate:
-    time: "33 8 1 * * *" # cron time pattern to execute rotate.cmd
-    cmd:  [ logrotate, logrotate.conf ]
-  files:
-    app.log: # file path, required, either relative or absolute is ok.
-      # collector id, it will be use as part of offset file path, so it should be path safe.
-      # make sure different collectors of the same file has unique id.
-      es:
-        "@type": elastic-search
-        addrs:
-          - http://log-es.com/logc-dev-
+      # index can be time series index or regular index.
+      # index doesn't contain "<" and ">" acts as a regular index.
+      # in time series index, string between "<" and ">" acts as time layout.
+      # see https://golang.org/pkg/time/#Parse for time layout format.
+      index: app-log-<2006.01.02>
 
-        # index can be time series index or regular index.
-        # index doesn't contain "<" and ">" acts as a regular index.
-        # in time series index, string between "<" and ">" acts as time layout.
-        # see https://golang.org/pkg/time/#Parse for time layout format.
-        index: app-log-<2006.01.02>
+      type: app-log
+      mapping: *mapping
 
-        type: app-log
-        mapping: *mapping
+      ### the following fields is effective only when "index" field is a time series index. ###
 
-        ### the following fields is effective only when "index" field is a time series index. ###
+      # field used to determine which time series index to write to.
+      timeField: at
+      # time layout to parse "timeField". (default: RFC3339)
+      timeFormat: "2006-01-02T15:04:05Z0700"
+      # the number of latest time series indices to keep. old indices will be deleted.
+      indexKeep: 100
 
-        # field used to determine which time series index to write to.
-        timeField: at
-        # time layout to parse "timeField". (default: RFC3339)
-        timeFormat: "2006-01-02T15:04:05Z0700"
-        # the number of latest time series indices to keep. old indices will be deleted.
-        indexKeep: 100
+  app.err:
+    es:
+      "@type": elastic-search
+      addrs: *addrs
+      index: app-err-<2006.01.02>
+      type: app-err
+      mapping: *mapping
+      timeField: at
+  consume.log:
+    es:
+      "@type": elastic-search
+      addrs: *addrs
+      index: consume-log
+      type: consume-log
+      mapping: *mappingConsume
+      timeField: at
 
-    app.err:
-      es:
-        "@type": elastic-search
-        addrs:
-          - http://log-es.com/logc-dev-
-        index: app-err-<2006.01.02>
-        type: app-err
-        mapping: *mapping
-        timeField: at
-    consume.log:
-      es:
-        "@type": elastic-search
-        addrs:
-          - http://log-es.com/logc-dev-
-        index: consume-log
-        type: consume-log
-        mapping: *mappingConsume
-        timeField: at
+addrs: &addrs
+  - http://log-es.com/logc-dev-
 
 mapping: &mapping
   at: { type: date }

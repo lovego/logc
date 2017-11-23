@@ -10,18 +10,6 @@ import (
 	"github.com/lovego/xiaomei/utils/mailer"
 )
 
-var theEnv string
-
-func Env() string {
-	if theEnv == `` {
-		theEnv = os.Getenv(`GOENV`)
-		if theEnv == `` {
-			theEnv = `dev`
-		}
-	}
-	return theEnv
-}
-
 var theAlarm *alarm.Alarm
 
 func Alarm() *alarm.Alarm {
@@ -31,12 +19,8 @@ func Alarm() *alarm.Alarm {
 		if err != nil {
 			log.Panic(err)
 		}
-		env := os.Getenv(`GOENV`)
-		if env == `` {
-			env = `dev`
-		}
 		theAlarm = alarm.New(
-			conf.Name+`_`+env+`_logc`, alarm.MailSender{Receivers: conf.Keepers, Mailer: m},
+			conf.Name+`_logc`, alarm.MailSender{Receivers: conf.Keepers, Mailer: m},
 			0, 5*time.Second, 30*time.Second,
 		)
 	}

@@ -30,15 +30,9 @@ func parse(configFile string) Config {
 	if err != nil {
 		log.Fatal(err)
 	}
-	confs := struct {
-		Envs map[string]Config `yaml:"envs"`
-	}{}
-	if err := yaml.Unmarshal(content, &confs); err != nil {
+	conf := Config{}
+	if err := yaml.Unmarshal(content, &conf); err != nil {
 		log.Fatal(err)
-	}
-	conf, ok := confs.Envs[Env()]
-	if !ok {
-		log.Fatalf(`%s: %s: undefined.`, configFile, Env())
 	}
 	return conf
 }

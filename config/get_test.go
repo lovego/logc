@@ -10,7 +10,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	os.Args = []string{os.Args[0], `logc.yml`}
+	os.Args = []string{os.Args[0], `../release/test/logc.yml`}
 	got := Get()
 	expect := getTestExpectConfig()
 
@@ -56,7 +56,7 @@ func getTestExpectConfig() Config {
 					"@type":      "elastic-search",
 					"addrs":      []interface{}{"http://log-es.com/logc-dev-"},
 					"index":      "app-log-<2006.01.02>",
-					"indexKeep":  3,
+					"indexKeep":  100,
 					"type":       "app-log",
 					"mapping":    mapping,
 					"timeField":  "at",

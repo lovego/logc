@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lovego/xiaomei/utils/fs"
-	"github.com/lovego/xiaomei/utils/logger"
+	"github.com/lovego/fs"
+	"github.com/lovego/logger"
 )
 
 type offsetFile struct {

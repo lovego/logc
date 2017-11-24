@@ -1,8 +1,8 @@
 package elastic_search
 
 import (
-	"github.com/lovego/xiaomei/utils/elastic"
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	"github.com/lovego/elastic"
+	loggerpkg "github.com/lovego/logger"
 )
 
 // TODO: more error type retry

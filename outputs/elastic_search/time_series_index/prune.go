@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lovego/xiaomei/utils/elastic"
+	"github.com/lovego/elastic"
 )
 
 func (tsi TimeSeriesIndex) Prune(client *elastic.ES) {

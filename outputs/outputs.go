@@ -2,7 +2,7 @@ package outputs
 
 import (
 	"github.com/lovego/logc/outputs/elastic_search"
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	loggerpkg "github.com/lovego/logger"
 )
 
 var theLogger *loggerpkg.Logger

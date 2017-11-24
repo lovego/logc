@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/lovego/xiaomei/utils/logger"
+	"github.com/lovego/logger"
 )
 
 type Reader struct {

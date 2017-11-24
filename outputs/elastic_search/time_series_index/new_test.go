@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	loggerpkg "github.com/lovego/logger"
 )
 
 var testLogger = loggerpkg.New(``, os.Stderr, nil)

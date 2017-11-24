@@ -3,7 +3,7 @@ package reader
 import (
 	"time"
 
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	loggerpkg "github.com/lovego/logger"
 )
 
 var batchSize = 100 * 1024

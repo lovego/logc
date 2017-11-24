@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/lovego/xiaomei/utils/alarm"
-	"github.com/lovego/xiaomei/utils/fs"
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	"github.com/lovego/alarm"
+	"github.com/lovego/fs"
+	loggerpkg "github.com/lovego/logger"
 )
 
 var logger *loggerpkg.Logger

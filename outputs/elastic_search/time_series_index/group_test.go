@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	loggerpkg "github.com/lovego/logger"
 )
 
 func TestGroup(t *testing.T) {

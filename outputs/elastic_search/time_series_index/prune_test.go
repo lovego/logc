@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lovego/xiaomei/utils/elastic"
+	"github.com/lovego/elastic"
 )
 
 var testES = elastic.New(`http://log-es.com/logc-test-`)

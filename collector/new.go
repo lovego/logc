@@ -5,7 +5,7 @@ import (
 
 	readerpkg "github.com/lovego/logc/collector/reader"
 	"github.com/lovego/logc/outputs"
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	loggerpkg "github.com/lovego/logger"
 )
 
 type Reader interface {

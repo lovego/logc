@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/lovego/xiaomei/utils/alarm"
-	"github.com/lovego/xiaomei/utils/logger"
-	"github.com/lovego/xiaomei/utils/mailer"
+	"github.com/lovego/alarm"
+	"github.com/lovego/logger"
+	"github.com/lovego/mailer"
 )
 
 var theAlarm *alarm.Alarm

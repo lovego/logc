@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/lovego/logc/outputs/elastic_search/time_series_index"
-	"github.com/lovego/xiaomei/utils/elastic"
-	"github.com/lovego/xiaomei/utils/httputil"
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	"github.com/lovego/elastic"
+	"github.com/lovego/httputil"
+	loggerpkg "github.com/lovego/logger"
 	"github.com/spf13/cast"
 )
 

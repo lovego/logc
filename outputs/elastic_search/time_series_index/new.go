@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	loggerpkg "github.com/lovego/xiaomei/utils/logger"
+	loggerpkg "github.com/lovego/logger"
 )
 
 type TimeSeriesIndex struct {

@@ -11,8 +11,8 @@ sudo chmod +x /usr/local/bin/logc
 
 # Usage
 ```
-logc <yaml_config_file>
+logc <your_logc_config_file.yml>
 ```
-See <a href="blob/master/testdata/logc.yml">logc.yml</a> for full config format.
+See <a href="testdata/logc.yml">logc.yml</a> for full config format.
 
 

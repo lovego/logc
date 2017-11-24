@@ -2,8 +2,7 @@
 *.test
 tmp
 /logc
-/release/logc
-/release/test/.logc/
+/testdata/.logc/
 *.exe
 !.gitkeep
 *.pyc

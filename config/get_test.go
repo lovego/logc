@@ -10,7 +10,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	os.Args = []string{os.Args[0], `../release/test/logc.yml`}
+	os.Args = []string{os.Args[0], `../testdata/logc.yml`}
 	got := Get()
 	expect := getTestExpectConfig()
 

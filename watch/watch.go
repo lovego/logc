@@ -33,7 +33,7 @@ func Watch(collectorMakers map[string]func() []Collector) {
 	dirsWatcher := getDirsWatcher(collectorMakers)
 	defer dirsWatcher.Close()
 
-	log.Printf("logc started.\n")
+	log.Printf("\033[32mlogc started.\033[0m")
 
 	for {
 		select {

@@ -9,33 +9,41 @@ func (c *Collector) loop() {
 	for {
 		select {
 		case <-c.writeEvent:
-			c.collect()
+			if !c.collect() {
+				c.logger.Errorf("%s: collector exited.", c.id)
+				c.close()
+				return
+			}
 		case <-c.closeEvent:
 			c.collect()
+			c.logger.Printf("collector close")
 			c.close()
 			return
 		}
 	}
 }
 
-func (c *Collector) collect() {
+func (c *Collector) collect() bool {
 	for {
 		rows, drain := c.reader.Read()
 		if len(rows) > 0 {
-			c.output.Write(rows)
-			c.logger.Printf("%d, %s\n", len(rows), c.reader.SaveOffset())
+			if c.output.Write(rows) {
+				c.logger.Printf("%d, %s\n", len(rows), c.reader.SaveOffset())
+			} else {
+				return false
+			}
 		}
 		if drain {
 			break
 		}
 	}
+	return true
 }
 
 func (c *Collector) close() {
-	c.logger.Printf("collector close")
 	c.reader.Close()
 	if err := c.logFile.Close(); err != nil {
-		logger.Errorf("logger: close error: %v", err)
+		c.logger.Errorf("%s: close logger error: %v.", c.id, err)
 	}
 }
 

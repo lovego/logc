@@ -30,7 +30,7 @@ func openFile(path string) *os.File {
 	return file
 }
 
-func getLogcPath(path, collectorId string, f *os.File) string {
+func getLogcPath(path, name string, f *os.File) string {
 	fi, err := f.Stat()
 	if err != nil {
 		logger.Errorln("stat:", err)
@@ -42,7 +42,7 @@ func getLogcPath(path, collectorId string, f *os.File) string {
 		return ``
 	}
 	ino := strconv.FormatUint(sys.Ino, 10)
-	return filepath.Join(filepath.Dir(path), `.logc`, collectorId+`.`+ino)
+	return filepath.Join(filepath.Dir(path), `.logc`, name+`.`+ino)
 }
 
 func openLogFile(path string) *os.File {
@@ -66,7 +66,7 @@ func freeResource(file, logFile *os.File) {
 	}
 	if logFile != nil {
 		if err := logFile.Close(); err != nil {
-			logger.Errorf("logger: close error: %v", err)
+			logger.Errorf("close logger error: %v", err)
 		}
 	}
 }

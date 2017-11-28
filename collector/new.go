@@ -16,6 +16,7 @@ type Reader interface {
 }
 
 type Collector struct {
+	id         string
 	logFile    *os.File
 	logger     *loggerpkg.Logger
 	reader     Reader
@@ -24,16 +25,18 @@ type Collector struct {
 	closeEvent chan struct{}
 }
 
-func New(path, collectorId string, outputMaker func(*loggerpkg.Logger) outputs.Output) *Collector {
+func New(path, name string, outputMaker func(*loggerpkg.Logger) outputs.Output) *Collector {
 	var file, logFile *os.File
 	if file = openFile(path); file != nil {
-		if logcPath := getLogcPath(path, collectorId, file); logcPath != `` {
+		if logcPath := getLogcPath(path, name, file); logcPath != `` {
 			if logFile := openLogFile(logcPath + `.log`); logFile != nil {
 				logger := loggerpkg.New(``, logFile, theAlarm)
 				logger.Printf("collect %s", path)
-				if reader := readerpkg.New(file, logcPath+`.offset`, logger); reader != nil {
+				collectorId := path + `:` + name
+				if reader := readerpkg.New(collectorId, file, logcPath+`.offset`, logger); reader != nil {
 					if output := outputMaker(logger); output != nil {
 						collector := &Collector{
+							id:         collectorId,
 							logFile:    logFile,
 							logger:     logger,
 							reader:     reader,

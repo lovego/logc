@@ -10,15 +10,18 @@ import (
 )
 
 type Reader struct {
-	file       *os.File
-	offsetFile *offsetFile
-	buffered   []byte
-	reader     *bufio.Reader
-	logger     *logger.Logger
+	file        *os.File
+	offsetFile  *offsetFile
+	buffered    []byte
+	reader      *bufio.Reader
+	logger      *logger.Logger
+	collectorId string
 }
 
-func New(file *os.File, offsetPath string, logger *logger.Logger) *Reader {
-	r := &Reader{file: file, reader: bufio.NewReader(file), logger: logger}
+func New(collectorId string, file *os.File, offsetPath string, logger *logger.Logger) *Reader {
+	r := &Reader{
+		collectorId: collectorId, file: file, reader: bufio.NewReader(file), logger: logger,
+	}
 	if offsetFile := newOffsetFile(offsetPath, logger); offsetFile != nil {
 		r.offsetFile = offsetFile
 	} else {
@@ -60,7 +63,7 @@ func (r *Reader) readSize(targetSize int) (rows []map[string]interface{}, drain 
 	if err != nil {
 		drain = true // 读到文件末尾或者读取出错都认为都完了所有内容
 		if err != io.EOF {
-			r.logger.Errorf("reader: read error: %v", err)
+			r.logger.Errorf("%s: reader: read error: %v", r.collectorId, err)
 		}
 	}
 	return
@@ -76,7 +79,7 @@ func (r *Reader) SaveOffset() string {
 
 func (r *Reader) SameFile(fi os.FileInfo) bool {
 	if thisFi, err := r.file.Stat(); err != nil {
-		r.logger.Errorf("reader: stat error: %v", err)
+		r.logger.Errorf("%s: reader: stat error: %v", r.collectorId, err)
 		return false
 	} else {
 		return os.SameFile(thisFi, fi)
@@ -85,7 +88,7 @@ func (r *Reader) SameFile(fi os.FileInfo) bool {
 
 func (r *Reader) Close() {
 	if err := r.file.Close(); err != nil {
-		r.logger.Errorf("reader: close error: %v", err)
+		r.logger.Errorf("%s: reader: close error: %v", r.collectorId, err)
 	}
 	r.offsetFile.Close()
 }

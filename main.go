@@ -37,9 +37,9 @@ func getCollectorMakers(files map[string]map[string]map[string]interface{}) map[
 
 func getCollectorsMaker(path string, collectorsConf map[string]map[string]interface{}) func() []watch.Collector {
 	return func() (collectors []watch.Collector) {
-		for collectorId, outputConf := range collectorsConf {
-			if outputMaker := outputs.Maker(path+`:`+collectorId, outputConf); outputMaker != nil {
-				if c := collector.New(path, collectorId, outputMaker); c != nil {
+		for name, outputConf := range collectorsConf {
+			if outputMaker := outputs.Maker(path+`:`+name, outputConf); outputMaker != nil {
+				if c := collector.New(path, name, outputMaker); c != nil {
 					collectors = append(collectors, c)
 				}
 			}

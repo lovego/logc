@@ -33,12 +33,16 @@ func (tsi *TimeSeriesIndex) Group(rows []map[string]interface{}) (result []Rows)
 func (tsi TimeSeriesIndex) Of(row map[string]interface{}) string {
 	value, ok := row[tsi.timeField].(string)
 	if !ok {
-		tsi.logger.Errorf("non string timeField %s: %v", tsi.timeField, row[tsi.timeField])
+		tsi.logger.Errorf("%s: non string timeField %s: %v",
+			tsi.collectorId, tsi.timeField, row[tsi.timeField],
+		)
 		return ``
 	}
 	at, err := time.Parse(tsi.timeFormat, value)
 	if err != nil {
-		tsi.logger.Errorf("parse timeField %s with layout %s error: %v", tsi.timeField, tsi.timeFormat, err)
+		tsi.logger.Errorf("%s: parse timeField %s with layout %s error: %v",
+			tsi.collectorId, tsi.timeField, tsi.timeFormat, err,
+		)
 		return ``
 	}
 	return tsi.Get(at)

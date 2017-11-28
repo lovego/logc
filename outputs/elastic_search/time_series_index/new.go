@@ -10,9 +10,10 @@ import (
 )
 
 type TimeSeriesIndex struct {
-	prefix     string
-	timeLayout string
-	suffix     string
+	collectorId string
+	prefix      string
+	timeLayout  string
+	suffix      string
 
 	timeField  string
 	timeFormat string
@@ -22,7 +23,7 @@ type TimeSeriesIndex struct {
 
 var timeSeriesIndexRegexp = regexp.MustCompile(`^([^<>]*)<([^<>]+)>([^<>]*)$`)
 
-func New(index, timeField, timeFormat string, keep int, logger *loggerpkg.Logger) (
+func New(collectorId, index, timeField, timeFormat string, keep int, logger *loggerpkg.Logger) (
 	*TimeSeriesIndex, error,
 ) {
 	if strings.IndexByte(index, '<') < 0 && strings.IndexByte(index, '>') < 0 {
@@ -42,12 +43,13 @@ func New(index, timeField, timeFormat string, keep int, logger *loggerpkg.Logger
 	}
 
 	return &TimeSeriesIndex{
-		prefix:     m[1],
-		timeLayout: m[2],
-		suffix:     m[3],
-		timeField:  timeField,
-		timeFormat: timeFormat,
-		keep:       keep,
-		logger:     logger,
+		collectorId: collectorId,
+		prefix:      m[1],
+		timeLayout:  m[2],
+		suffix:      m[3],
+		timeField:   timeField,
+		timeFormat:  timeFormat,
+		keep:        keep,
+		logger:      logger,
 	}, nil
 }

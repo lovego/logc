@@ -19,7 +19,7 @@ func (tsi TimeSeriesIndex) Prune(client *elastic.ES) {
 	obsoletes := indices[tsi.keep:]
 	for _, index := range obsoletes {
 		if err := client.Delete(index, nil); err != nil {
-			tsi.logger.Errorf("delete index %s error: %s", index, err)
+			tsi.logger.Errorf("%s: delete index %s error: %s", tsi.collectorId, index, err)
 		} else {
 			tsi.logger.Printf("pruned index: %s", index)
 		}
@@ -37,7 +37,9 @@ func (tsi TimeSeriesIndex) getIndices(client *elastic.ES) (indices []string) {
 		}
 	}
 	if len(indices) == 0 {
-		tsi.logger.Errorf("no indices matches: %s<%s>%s", tsi.prefix, tsi.timeLayout, tsi.suffix)
+		tsi.logger.Errorf("%s: no indices matches: %s<%s>%s",
+			tsi.collectorId, tsi.prefix, tsi.timeLayout, tsi.suffix,
+		)
 	}
 	return
 }
@@ -45,7 +47,7 @@ func (tsi TimeSeriesIndex) getIndices(client *elastic.ES) (indices []string) {
 func (tsi TimeSeriesIndex) catIndices(client *elastic.ES) (indices []string) {
 	uri, err := url.Parse(client.BaseAddrs[0])
 	if err != nil {
-		tsi.logger.Errorf("parse es addr %s error: %v", client.BaseAddrs[0], err)
+		tsi.logger.Errorf("%s: parse es addr %s error: %v", tsi.collectorId, client.BaseAddrs[0], err)
 		return
 	}
 	pattern := uri.Path + tsi.prefix + `*` + tsi.suffix // uri.Path: /logc-dev-
@@ -55,11 +57,11 @@ func (tsi TimeSeriesIndex) catIndices(client *elastic.ES) (indices []string) {
 	}
 	query := "/_cat/indices" + pattern + "?format=json&h=index&s=index:desc"
 	if err := client.RootGet(query, nil, &result); err != nil {
-		tsi.logger.Errorf("%s error: %+v\n", query, err)
+		tsi.logger.Errorf("%s: %s error: %+v\n", tsi.collectorId, query, err)
 		return
 	}
 	if len(result) == 0 {
-		tsi.logger.Errorf("no indices matches: %s", pattern)
+		tsi.logger.Errorf("%s: no indices matches: %s", tsi.collectorId, pattern)
 	}
 	prefix := strings.TrimPrefix(uri.Path, `/`)
 	for _, data := range result {

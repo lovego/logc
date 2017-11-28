@@ -47,7 +47,7 @@ func New(collectorId string, conf map[string]interface{}, logger *loggerpkg.Logg
 	}
 
 	if tsi, err := time_series_index.New(
-		es.index, timeField, timeFormat, indexKeep, logger,
+		collectorId, es.index, timeField, timeFormat, indexKeep, logger,
 	); err == nil {
 		es.timeSeriesIndex = tsi
 	} else {

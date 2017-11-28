@@ -8,10 +8,10 @@ import (
 // TODO: more error type retry
 func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]interface{} {
 	if errs := es.client.BulkIndex(index+`/`+es.typ, docs); errs != nil {
+		es.logger.Errorf("%s: bulkIndex error: %v", es.collectorId, errs)
 		if err, ok := errs.(elastic.BulkError); ok {
 			return err.FailedItems()
 		}
-		es.logger.Errorf("%s: bulkIndex err: %v", es.collectorId, errs)
 		return docs
 	}
 	return nil

@@ -5,7 +5,12 @@ import (
 )
 
 func (c *Collector) loop() {
-	c.collect() // collect existing data.
+	// collect existing data.
+	if !c.collect() {
+		c.logger.Errorf("%s: collector exited.", c.id)
+		c.close()
+		return
+	}
 	for {
 		select {
 		case <-c.writeEvent:

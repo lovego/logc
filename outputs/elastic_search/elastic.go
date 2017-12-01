@@ -24,7 +24,7 @@ func (es *ElasticSearch) ensureIndex(index string, logger *loggerpkg.Logger) boo
 		return false
 	} else if !ok {
 		es.logger.Printf("create index: %s", index)
-		if err := es.client.Put(index, nil, nil); err != nil {
+		if err := es.client.Put(index, nil, nil); err != nil && !elastic.IsIndexAreadyExists(err) {
 			logger.Errorf("%s: create index %s error: %+v\n", es.collectorId, index, err)
 			return false
 		}

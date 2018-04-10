@@ -5,13 +5,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/lovego/logc/outputs/elasticsearch/time_series_index"
 	"github.com/lovego/elastic"
 	"github.com/lovego/httputil"
+	"github.com/lovego/logc/outputs/elasticsearch/time_series_index"
 	loggerpkg "github.com/lovego/logger"
 )
 
-var testEsAddrs = []string{`http://log-es.com/logc-test-`}
+var testEsAddrs = []string{`http://127.0.0.1:9200/logc-test-`}
 var testEsClient = elastic.New2(&httputil.Client{Client: http.DefaultClient}, testEsAddrs...)
 
 var testMapping = map[string]map[string]interface{}{
@@ -37,14 +37,13 @@ var testMapping = map[string]map[string]interface{}{
 
 var testLogger = loggerpkg.New(``, os.Stderr, nil)
 
-var testTsi1, _ = time_series_index.New("app-<2006.01.02>", `at`, time.RFC3339, 0, testLogger)
-var testTsi2, _ = time_series_index.New("app-<2006.01.02>", `at`, time.RFC3339, 3, testLogger)
+var testTsi1, _ = time_series_index.New("", "app-<2006.01.02>", `at`, time.RFC3339, 0, testLogger)
+var testTsi2, _ = time_series_index.New("", "app-<2006.01.02>", `at`, time.RFC3339, 3, testLogger)
 
 var testES1 = &ElasticSearch{
 	collectorId:     `test.log`,
 	addrs:           testEsAddrs,
 	index:           "app-<2006.01.02>",
-	typ:             "app-log",
 	mapping:         testMapping,
 	timeSeriesIndex: testTsi1,
 	client:          testEsClient,
@@ -55,7 +54,6 @@ var testES2 = &ElasticSearch{
 	collectorId:     `test.log`,
 	addrs:           testEsAddrs,
 	index:           "app-<2006.01.02>",
-	typ:             "app-log",
 	mapping:         testMapping,
 	timeSeriesIndex: testTsi2,
 	client:          testEsClient,
@@ -66,7 +64,6 @@ var testES3 = &ElasticSearch{
 	collectorId: `test.log`,
 	addrs:       testEsAddrs,
 	index:       "app-err",
-	typ:         "app-err",
 	mapping:     testMapping,
 	client:      testEsClient,
 	logger:      testLogger,

@@ -54,10 +54,9 @@ func getTestExpectConfig() Config {
 			"app.log": {
 				"es": {
 					"@type":      "elasticsearch",
-					"addrs":      []interface{}{"http://log-es.com/logc-dev-"},
+					"addrs":      []interface{}{"http://127.0.0.1:9200/logc-dev-"},
 					"index":      "app-log-<2006.01.02>",
 					"indexKeep":  100,
-					"type":       "app-log",
 					"mapping":    mapping,
 					"timeField":  "at",
 					"timeFormat": "2006-01-02T15:04:05Z0700",
@@ -66,9 +65,8 @@ func getTestExpectConfig() Config {
 			"app.err": {
 				"es": {
 					"@type":     "elasticsearch",
-					"addrs":     []interface{}{"http://log-es.com/logc-dev-"},
+					"addrs":     []interface{}{"http://127.0.0.1:9200/logc-dev-"},
 					"index":     "app-err-<2006.01.02>",
-					"type":      "app-err",
 					"mapping":   mapping,
 					"timeField": "at",
 				},
@@ -76,9 +74,8 @@ func getTestExpectConfig() Config {
 			"consume.log": {
 				"es": {
 					"@type": "elasticsearch",
-					"addrs": []interface{}{"http://log-es.com/logc-dev-"},
+					"addrs": []interface{}{"http://127.0.0.1:9200/logc-dev-"},
 					"index": "consume-log",
-					"type":  "consume-log",
 					"mapping": map[interface{}]interface{}{
 						"at":   map[interface{}]interface{}{"type": "date"},
 						"data": map[interface{}]interface{}{"type": "object"},

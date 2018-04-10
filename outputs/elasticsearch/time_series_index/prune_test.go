@@ -2,14 +2,14 @@ package time_series_index
 
 import (
 	"log"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/lovego/deep"
 	"github.com/lovego/elastic"
 )
 
-var testES = elastic.New(`http://log-es.com/logc-test-`)
+var testES = elastic.New(`http://127.0.0.1:9200/logc-test-`)
 var testIndices = []string{
 	`not-log-index`, `log-2017xxx`, `log-2017.13`,
 	`log-2017.12`, `log-2017.11`, `log-2017.10`, `log-2017.09`, `log-2017.08`, `log-2017.07`,
@@ -25,8 +25,8 @@ func TestPrune(t *testing.T) {
 	testTimeSeriesIndex.Prune(testES)
 	got := getExistingTestIndices()
 	expect := testIndices[:9]
-	if !reflect.DeepEqual(got, expect) {
-		t.Fatalf("expect: %v, got: %v\n", expect, got)
+	if diff := deep.Equal(got, expect); diff != nil {
+		t.Fatalf("\ndiff: %+v\n", diff)
 	}
 }
 
@@ -34,8 +34,8 @@ func TestGetIndices(t *testing.T) {
 	ensureTestIndices()
 	got := testTimeSeriesIndex.getIndices(testES)
 	expect := testIndices[3:]
-	if !reflect.DeepEqual(got, expect) {
-		t.Fatalf("expect: %v, got: %v\n", expect, got)
+	if diff := deep.Equal(got, expect); diff != nil {
+		t.Fatalf("\ndiff: %+v\n", diff)
 	}
 }
 
@@ -43,8 +43,8 @@ func TestCatIndices(t *testing.T) {
 	ensureTestIndices()
 	got := testTimeSeriesIndex.catIndices(testES)
 	expect := testIndices[1:]
-	if !reflect.DeepEqual(got, expect) {
-		t.Fatalf("expect: %v, got: %v\n", expect, got)
+	if diff := deep.Equal(got, expect); diff != nil {
+		t.Fatalf("\ndiff: %+v\n", diff)
 	}
 }
 
@@ -100,7 +100,9 @@ func getExistingTestIndices() (result []string) {
 		log.Panicf("GET %s error: %+v\n", urlStr, err)
 	}
 	for _, one := range slice {
-		result = append(result, strings.TrimPrefix(one.Index, `logc-test-`))
+		if strings.Index(one.Index, `log-`) > 0 {
+			result = append(result, strings.TrimPrefix(one.Index, `logc-test-`))
+		}
 	}
 	return
 }

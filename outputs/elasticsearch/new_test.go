@@ -1,8 +1,9 @@
 package elasticsearch
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/lovego/deep"
 )
 
 func init() {
@@ -13,8 +14,8 @@ func TestNew(t *testing.T) {
 	for _, tc := range getNewTestCases() {
 		got := New(`test.log`, tc.input, testLogger)
 		expect := tc.expect
-		if !reflect.DeepEqual(got, expect) {
-			t.Fatalf("\ninput: %s\n expect: %+v\n    got: %+v\n", tc.input, tc.expect, got)
+		if diff := deep.Equal(got, expect); diff != nil {
+			t.Fatalf("\ninput: %s\n diff: %+v\n", tc.input, diff)
 		}
 	}
 }
@@ -49,9 +50,8 @@ func getNewTestCases() []testCaseT {
 	return []testCaseT{
 		{
 			input: map[string]interface{}{
-				"addrs":      []interface{}{"http://log-es.com/logc-test-"},
+				"addrs":      []interface{}{"http://127.0.0.1:9200/logc-test-"},
 				"index":      "app-<2006.01.02>",
-				"type":       "app-log",
 				"mapping":    mappingIfc,
 				"timeField":  "at",
 				"timeFormat": "2006-01-02T15:04:05Z07:00",
@@ -61,9 +61,8 @@ func getNewTestCases() []testCaseT {
 		},
 		{
 			input: map[string]interface{}{
-				"addrs":     []interface{}{"http://log-es.com/logc-test-"},
+				"addrs":     []interface{}{"http://127.0.0.1:9200/logc-test-"},
 				"index":     "app-err",
-				"type":      "app-err",
 				"mapping":   mappingIfc,
 				"timeField": "at",
 			},

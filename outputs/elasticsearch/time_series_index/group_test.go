@@ -2,10 +2,10 @@ package time_series_index
 
 import (
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
+	"github.com/lovego/deep"
 	loggerpkg "github.com/lovego/logger"
 )
 
@@ -49,8 +49,8 @@ func TestGroup(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		got := tsi.Group(tc.input)
-		if !reflect.DeepEqual(got, tc.expect) {
-			t.Errorf("input: %s, expect: %v, got: %v\n", tc.input, tc.expect, got)
+		if diff := deep.Equal(got, tc.expect); diff != nil {
+			t.Fatalf("\ninput: %s\n diff: %+v\n", tc.input, diff)
 		}
 	}
 }

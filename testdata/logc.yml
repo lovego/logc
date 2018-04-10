@@ -1,5 +1,5 @@
 addrs: &addrs
-  - http://es.hztl3.com/logc-dev-
+  - http://127.0.0.1:9200/logc-dev-
 
 mapping: &mapping
   at: { type: date }
@@ -42,7 +42,7 @@ files:
       # index doesn't contain "<" and ">" acts as a regular index.
       # in time series index, string between "<" and ">" acts as time layout.
       # see https://golang.org/pkg/time/#Parse for time layout format.
-      index: app-log-<2006.01>
+      index: app-log-<2006.01.02>
       mapping: *mapping
 
       ### the following fields is effective only when "index" field is a time series index. ###
@@ -58,7 +58,7 @@ files:
     es:
       "@type": elasticsearch
       addrs: *addrs
-      index: app-err-<2006.01>
+      index: app-err-<2006.01.02>
       mapping: *mapping
       timeField: at
   consume.log:

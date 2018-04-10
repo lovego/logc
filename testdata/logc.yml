@@ -51,7 +51,7 @@ files:
       timeField: at
 
 addrs: &addrs
-  - http://log-es.com/logc-dev-
+  - http://127.0.0.1:9200/logc-dev-
 
 mapping: &mapping
   at: { type: date }

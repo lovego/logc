@@ -20,7 +20,6 @@ type ElasticSearch struct {
 	collectorId string
 	addrs       []string
 	index       string
-	typ         string
 	mapping     map[string]map[string]interface{}
 	client      *elastic.ES
 
@@ -78,8 +77,6 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 				switch k {
 				case `index`:
 					es.index = value
-				case `type`:
-					es.typ = value
 				case `timeField`:
 					*timeField = value
 				case `timeFormat`:
@@ -141,10 +138,6 @@ func (es *ElasticSearch) checkConf() bool {
 	}
 	if es.index == `` {
 		theLogger.Errorf("elastic-search(%s) config: index is empty.", es.collectorId)
-		return false
-	}
-	if es.typ == `` {
-		theLogger.Errorf("elastic-search(%s) config: type is empty.", es.collectorId)
 		return false
 	}
 	return true

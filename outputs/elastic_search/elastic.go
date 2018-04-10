@@ -7,7 +7,7 @@ import (
 
 // TODO: more error type retry
 func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]interface{} {
-	if errs := es.client.BulkIndex(index+`/`+es.typ, docs); errs != nil {
+	if errs := es.client.BulkIndex(index+`/_doc`, docs); errs != nil {
 		es.logger.Errorf("%s: bulkIndex error: %v", es.collectorId, errs)
 		if err, ok := errs.(elastic.BulkError); ok {
 			return err.FailedItems()
@@ -29,10 +29,10 @@ func (es *ElasticSearch) ensureIndex(index string, logger *loggerpkg.Logger) boo
 			return false
 		}
 	}
-	if err := es.client.Put(index+`/_mapping/`+es.typ, map[string]interface{}{
+	if err := es.client.Put(index+`/_mapping/_doc`, map[string]interface{}{
 		`properties`: es.mapping,
 	}, nil); err != nil {
-		logger.Errorf("%s: put mapping %s/%s error: %+v\n", es.collectorId, index, es.typ, err)
+		logger.Errorf("%s: put mapping %s/_doc error: %+v\n", es.collectorId, index, err)
 		return false
 	}
 	return true

@@ -1,11 +1,11 @@
-package elastic_search
+package elasticsearch
 
 import (
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/lovego/logc/outputs/elastic_search/time_series_index"
+	"github.com/lovego/logc/outputs/elasticsearch/time_series_index"
 	"github.com/lovego/elastic"
 	"github.com/lovego/httputil"
 	loggerpkg "github.com/lovego/logger"

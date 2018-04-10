@@ -1,11 +1,11 @@
-package elastic_search
+package elasticsearch
 
 import (
 	"net/http"
 
 	"github.com/lovego/elastic"
 	"github.com/lovego/httputil"
-	"github.com/lovego/logc/outputs/elastic_search/time_series_index"
+	"github.com/lovego/logc/outputs/elasticsearch/time_series_index"
 	loggerpkg "github.com/lovego/logger"
 	"github.com/spf13/cast"
 )
@@ -30,7 +30,7 @@ type ElasticSearch struct {
 
 func New(collectorId string, conf map[string]interface{}, logger *loggerpkg.Logger) *ElasticSearch {
 	if len(conf) == 0 {
-		theLogger.Errorf("elastic-search(%s): empty config.", collectorId)
+		theLogger.Errorf("elasticsearch(%s): empty config.", collectorId)
 		return nil
 	}
 
@@ -50,7 +50,7 @@ func New(collectorId string, conf map[string]interface{}, logger *loggerpkg.Logg
 	); err == nil {
 		es.timeSeriesIndex = tsi
 	} else {
-		theLogger.Errorf("elastic-search(%s) config: %v", es.collectorId, err)
+		theLogger.Errorf("elasticsearch(%s) config: %v", es.collectorId, err)
 		return nil
 	}
 	es.client = elastic.New2(&httputil.Client{Client: http.DefaultClient}, es.addrs...)
@@ -69,7 +69,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 			if addrs, err := cast.ToStringSliceE(v); err == nil {
 				es.addrs = addrs
 			} else {
-				theLogger.Errorf("elastic-search(%s) config: addrs should be an string array.", es.collectorId)
+				theLogger.Errorf("elasticsearch(%s) config: addrs should be an string array.", es.collectorId)
 				return false
 			}
 		case `index`, `type`, `timeField`, `timeFormat`:
@@ -83,7 +83,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 					*timeFormat = value
 				}
 			} else {
-				theLogger.Errorf("elastic-search(%s) config: %s should be a string.", es.collectorId, k)
+				theLogger.Errorf("elasticsearch(%s) config: %s should be a string.", es.collectorId, k)
 				return false
 			}
 		case `mapping`:
@@ -94,12 +94,12 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 			if keep, ok := v.(int); ok {
 				*indexKeep = keep
 			} else {
-				theLogger.Errorf("elastic-search(%s) config: indexKeep should be an integer.", es.collectorId)
+				theLogger.Errorf("elasticsearch(%s) config: indexKeep should be an integer.", es.collectorId)
 				return false
 			}
 		case `@collectorId`, `@type`:
 		default:
-			theLogger.Errorf("elastic-search(%s) config: unknown key: %s.", es.collectorId, k)
+			theLogger.Errorf("elasticsearch(%s) config: unknown key: %s.", es.collectorId, k)
 			return false
 		}
 	}
@@ -109,7 +109,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 func (es *ElasticSearch) parseMapping(v interface{}) bool {
 	m, ok := v.(map[interface{}]interface{})
 	if !ok {
-		theLogger.Errorf("elastic-search(%s) config: mapping should be a map.", es.collectorId)
+		theLogger.Errorf("elasticsearch(%s) config: mapping should be a map.", es.collectorId)
 		return false
 	}
 
@@ -117,12 +117,12 @@ func (es *ElasticSearch) parseMapping(v interface{}) bool {
 	for k, v := range m {
 		kk, ok := k.(string)
 		if !ok {
-			theLogger.Errorf("elastic-search(%s) config: invalid mapping.", es.collectorId)
+			theLogger.Errorf("elasticsearch(%s) config: invalid mapping.", es.collectorId)
 			return false
 		}
 		vv, ok := v.(map[interface{}]interface{})
 		if !ok {
-			theLogger.Errorf("elastic-search(%s) config: invalid mapping.", es.collectorId)
+			theLogger.Errorf("elasticsearch(%s) config: invalid mapping.", es.collectorId)
 			return false
 		}
 		mapping[kk] = convertMapKeyToStr(vv)
@@ -133,11 +133,11 @@ func (es *ElasticSearch) parseMapping(v interface{}) bool {
 
 func (es *ElasticSearch) checkConf() bool {
 	if len(es.addrs) == 0 {
-		theLogger.Errorf("elastic-search(%s) config: addrs is emtpty.", es.collectorId)
+		theLogger.Errorf("elasticsearch(%s) config: addrs is emtpty.", es.collectorId)
 		return false
 	}
 	if es.index == `` {
-		theLogger.Errorf("elastic-search(%s) config: index is empty.", es.collectorId)
+		theLogger.Errorf("elasticsearch(%s) config: index is empty.", es.collectorId)
 		return false
 	}
 	return true

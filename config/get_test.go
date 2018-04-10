@@ -53,7 +53,7 @@ func getTestExpectConfig() Config {
 		Files: map[string]map[string]map[string]interface{}{
 			"app.log": {
 				"es": {
-					"@type":      "elastic-search",
+					"@type":      "elasticsearch",
 					"addrs":      []interface{}{"http://log-es.com/logc-dev-"},
 					"index":      "app-log-<2006.01.02>",
 					"indexKeep":  100,
@@ -65,7 +65,7 @@ func getTestExpectConfig() Config {
 			},
 			"app.err": {
 				"es": {
-					"@type":     "elastic-search",
+					"@type":     "elasticsearch",
 					"addrs":     []interface{}{"http://log-es.com/logc-dev-"},
 					"index":     "app-err-<2006.01.02>",
 					"type":      "app-err",
@@ -75,7 +75,7 @@ func getTestExpectConfig() Config {
 			},
 			"consume.log": {
 				"es": {
-					"@type": "elastic-search",
+					"@type": "elasticsearch",
 					"addrs": []interface{}{"http://log-es.com/logc-dev-"},
 					"index": "consume-log",
 					"type":  "consume-log",

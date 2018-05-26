@@ -29,9 +29,7 @@ func (es *ElasticSearch) ensureIndex(index string, logger *loggerpkg.Logger) boo
 			return false
 		}
 	}
-	if err := es.client.Put(index+`/_mapping/_doc`, map[string]interface{}{
-		`properties`: es.mapping,
-	}, nil); err != nil {
+	if err := es.client.Put(index+`/_mapping/_doc`, es.mapping, nil); err != nil {
 		logger.Errorf("%s: put mapping %s/_doc error: %+v\n", es.collectorId, index, err)
 		return false
 	}

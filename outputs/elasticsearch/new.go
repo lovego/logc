@@ -7,6 +7,7 @@ import (
 	"github.com/lovego/httputil"
 	"github.com/lovego/logc/outputs/elasticsearch/time_series_index"
 	loggerpkg "github.com/lovego/logger"
+	"github.com/lovego/strmap"
 	"github.com/spf13/cast"
 )
 
@@ -20,7 +21,7 @@ type ElasticSearch struct {
 	collectorId string
 	addrs       []string
 	index       string
-	mapping     map[string]map[string]interface{}
+	mapping     map[string]interface{}
 	client      *elastic.ES
 
 	timeSeriesIndex *time_series_index.TimeSeriesIndex
@@ -112,22 +113,12 @@ func (es *ElasticSearch) parseMapping(v interface{}) bool {
 		theLogger.Errorf("elasticsearch(%s) config: mapping should be a map.", es.collectorId)
 		return false
 	}
-
-	mapping := make(map[string]map[string]interface{})
-	for k, v := range m {
-		kk, ok := k.(string)
-		if !ok {
-			theLogger.Errorf("elasticsearch(%s) config: invalid mapping.", es.collectorId)
-			return false
-		}
-		vv, ok := v.(map[interface{}]interface{})
-		if !ok {
-			theLogger.Errorf("elasticsearch(%s) config: invalid mapping.", es.collectorId)
-			return false
-		}
-		mapping[kk] = convertMapKeyToStr(vv)
+	if mapping, err := strmap.Convert(m, ""); err != nil {
+		theLogger.Errorf("elasticsearch(%s) config: invalid mapping: %v.", es.collectorId, err)
+		return false
+	} else {
+		es.mapping = mapping
 	}
-	es.mapping = mapping
 	return true
 }
 
@@ -141,16 +132,4 @@ func (es *ElasticSearch) checkConf() bool {
 		return false
 	}
 	return true
-}
-
-func convertMapKeyToStr(data map[interface{}]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	for k, v := range data {
-		if mapData, ok := v.(map[interface{}]interface{}); ok {
-			result[k.(string)] = convertMapKeyToStr(mapData)
-		} else {
-			result[k.(string)] = v
-		}
-	}
-	return result
 }

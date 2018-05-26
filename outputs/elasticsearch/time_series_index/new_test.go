@@ -12,6 +12,10 @@ import (
 
 var testLogger = loggerpkg.New(``, os.Stderr, nil)
 
+func init() {
+	deep.CompareUnexportedFields = true
+}
+
 func TestNew(t *testing.T) {
 	type testCaseT struct {
 		input     string

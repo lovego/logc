@@ -2,24 +2,31 @@ addrs: &addrs
   - http://127.0.0.1:9200/logc-dev-
 
 mapping: &mapping
-  at: { type: date }
-  duration: { type: float }
-  host: { type: keyword }
-  method: { type: keyword }
-  path: { type: text, fields: { raw: { type: keyword } }}
-  query: { type: text }
-  status: { type: keyword }
-  req_body: { type: integer }
-  res_body: { type: integer }
-  ip: { type: ip }
-  refer: { type: text }
-  agent: { type: text }
-  proto: { type: keyword }
-  # session: sess
+  properties:
+    at: { type: date }
+    duration: { type: float }
+    host: { type: keyword }
+    method: { type: keyword }
+    path: { type: text, fields: { raw: { type: keyword } }}
+    status: { type: keyword }
+    req_body: { type: text }
+    res_body: { type: text }
+    req_body_size: { type: integer }
+    res_body_size: { type: integer }
+    ip: { type: ip }
+    refer: { type: text }
+    agent: { type: text }
+    proto: { type: keyword }
+    # session: sess
+  dynamic_templates:
+    - query:
+        path_match: "query.*"
+        mapping: { type: text, fields: { raw: { type: keyword } } }
 
 mappingConsume: &mappingConsume
-  at: { type: date }
-  data: { type: object }
+  properties:
+    at: { type: date }
+    data: { type: object }
 
 name: test     # name used for alarm
 mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh

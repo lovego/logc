@@ -8,6 +8,7 @@ mapping: &mapping
     host: { type: keyword }
     method: { type: keyword }
     path: { type: text, fields: { raw: { type: keyword } }}
+    query: { type: object }
     status: { type: keyword }
     req_body: { type: text }
     res_body: { type: text }

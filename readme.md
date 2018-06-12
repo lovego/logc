@@ -2,6 +2,11 @@
 A log collector(like logstash, fluentd) written by golang.
 Now only support read from files and output to elasticSearch.
 
+[![Build Status](https://travis-ci.org/lovego/logc.svg?branch=master)](https://travis-ci.org/lovego/logc)
+[![Coverage Status](https://coveralls.io/repos/github/lovego/logc/badge.svg?branch=master)](https://coveralls.io/github/lovego/logc?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/lovego/logc)](https://goreportcard.com/report/github.com/lovego/logc)
+[![GoDoc](https://godoc.org/github.com/lovego/logc?status.svg)](https://godoc.org/github.com/lovego/logc)
+
 # Install
 
 ```

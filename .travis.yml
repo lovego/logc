@@ -1,7 +1,5 @@
 language: go
 go:
-  - "1.8"
-  - "1.9"
   - "1.10"
 before_install:
   - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.4.deb && sudo dpkg -i --force-confnew elasticsearch-6.2.4.deb && sudo service elasticsearch restart

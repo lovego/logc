@@ -21,28 +21,45 @@ func TestGet(t *testing.T) {
 
 func getTestExpectConfig() Config {
 	mapping := map[interface{}]interface{}{
-		"host":     map[interface{}]interface{}{"type": "keyword"},
-		"query":    map[interface{}]interface{}{"type": "text"},
-		"status":   map[interface{}]interface{}{"type": "keyword"},
-		"req_body": map[interface{}]interface{}{"type": "integer"},
-		"res_body": map[interface{}]interface{}{"type": "integer"},
-		"agent":    map[interface{}]interface{}{"type": "text"},
-		"at":       map[interface{}]interface{}{"type": "date"},
-		"method":   map[interface{}]interface{}{"type": "keyword"},
-		"path": map[interface{}]interface{}{
-			"type": "text",
-			"fields": map[interface{}]interface{}{
-				"raw": map[interface{}]interface{}{"type": "keyword"},
+		"properties": map[interface{}]interface{}{
+			"at":       map[interface{}]interface{}{"type": "date"},
+			"duration": map[interface{}]interface{}{"type": "float"},
+			"host":     map[interface{}]interface{}{"type": "keyword"},
+			"method":   map[interface{}]interface{}{"type": "keyword"},
+			"path": map[interface{}]interface{}{
+				"type": "text",
+				"fields": map[interface{}]interface{}{
+					"raw": map[interface{}]interface{}{"type": "keyword"},
+				},
+			},
+			"query":         map[interface{}]interface{}{"type": "object"},
+			"status":        map[interface{}]interface{}{"type": "keyword"},
+			"req_body":      map[interface{}]interface{}{"type": "text"},
+			"res_body":      map[interface{}]interface{}{"type": "text"},
+			"req_body_size": map[interface{}]interface{}{"type": "integer"},
+			"res_body_size": map[interface{}]interface{}{"type": "integer"},
+			"ip":            map[interface{}]interface{}{"type": "ip"},
+			"refer":         map[interface{}]interface{}{"type": "text"},
+			"agent":         map[interface{}]interface{}{"type": "text"},
+			"proto":         map[interface{}]interface{}{"type": "keyword"},
+		},
+		"dynamic_templates": []interface{}{
+			map[interface{}]interface{}{
+				"query": map[interface{}]interface{}{
+					"path_match": "query.*",
+					"mapping": map[interface{}]interface{}{
+						"type": "text",
+						"fields": map[interface{}]interface{}{
+							"raw": map[interface{}]interface{}{"type": "keyword"},
+						},
+					},
+				},
 			},
 		},
-		"ip":       map[interface{}]interface{}{"type": "ip"},
-		"refer":    map[interface{}]interface{}{"type": "text"},
-		"proto":    map[interface{}]interface{}{"type": "keyword"},
-		"duration": map[interface{}]interface{}{"type": "float"},
 	}
 
 	return Config{
-		Name:    "test",
+		Name:    "test_dev",
 		Mailer:  "mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh",
 		Keepers: []string{},
 		Batch:   reader.Batch{Size: 102400, Wait: "3s"},
@@ -77,8 +94,10 @@ func getTestExpectConfig() Config {
 					"addrs": []interface{}{"http://127.0.0.1:9200/logc-dev-"},
 					"index": "consume-log",
 					"mapping": map[interface{}]interface{}{
-						"at":   map[interface{}]interface{}{"type": "date"},
-						"data": map[interface{}]interface{}{"type": "object"},
+						"properties": map[interface{}]interface{}{
+							"at":   map[interface{}]interface{}{"type": "date"},
+							"data": map[interface{}]interface{}{"type": "object"},
+						},
 					},
 					"timeField": "at",
 				},

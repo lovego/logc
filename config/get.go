@@ -20,12 +20,13 @@ func Get() Config {
 		}
 		conf := parse(configFile)
 		conf.check()
-		theConf = conf
+		conf.setByEnv()
+		theConf = *conf
 	}
 	return theConf
 }
 
-func parse(configFile string) Config {
+func parse(configFile string) *Config {
 	content, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Fatal(err)
@@ -34,7 +35,7 @@ func parse(configFile string) Config {
 	if err := yaml.Unmarshal(content, &conf); err != nil {
 		log.Fatal(err)
 	}
-	return conf
+	return &conf
 }
 
 func notExist(p string) bool {
@@ -56,7 +57,9 @@ func getArguments() string {
 
 func usage() {
 	fmt.Fprintf(os.Stderr,
-		`logc watch files, collect content, and push to logd server. (version: 17.9.26)
+		`logc watch files, collect content, and push to log server, such as elasticsearch etc.
+
+version: 18.6.12
 usage: %s <yaml-config-file>
 `, os.Args[0])
 	flag.PrintDefaults()

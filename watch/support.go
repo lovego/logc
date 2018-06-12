@@ -26,7 +26,7 @@ func getDirsWatcher(collectorMakers map[string]func() []Collector) *fsnotify.Wat
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal("fsnotify.NewWatcher error: %v\n", err)
+		log.Fatalf("fsnotify.NewWatcher error: %v\n", err)
 	}
 
 	for dir := range dirs {

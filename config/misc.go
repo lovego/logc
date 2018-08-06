@@ -20,8 +20,8 @@ func Alarm() *alarm.Alarm {
 			log.Panic(err)
 		}
 		theAlarm = alarm.New(
-			conf.Name+`_logc`, alarm.MailSender{Receivers: conf.Keepers, Mailer: m},
-			0, 5*time.Second, 30*time.Second,
+			alarm.MailSender{Receivers: conf.Keepers, Mailer: m},
+			0, 5*time.Second, 30*time.Second, alarm.SetPrefix(conf.Name+`_logc`),
 		)
 	}
 	return theAlarm
@@ -31,7 +31,8 @@ var theLogger *logger.Logger
 
 func Logger() *logger.Logger {
 	if theLogger == nil {
-		theLogger = logger.New(``, os.Stderr, theAlarm)
+		theLogger = logger.New(os.Stderr)
+		theLogger.SetAlarm(theAlarm)
 	}
 	return theLogger
 }

@@ -30,8 +30,9 @@ func New(path, name string, outputMaker func(*loggerpkg.Logger) outputs.Output) 
 	if file = openFile(path); file != nil {
 		if logcPath := getLogcPath(path, name, file); logcPath != `` {
 			if logFile := openLogFile(logcPath + `.log`); logFile != nil {
-				logger := loggerpkg.New(``, logFile, theAlarm)
-				logger.Printf("collect %s", path)
+				logger := loggerpkg.New(logFile)
+				logger.SetAlarm(theAlarm)
+				logger.Infof("collect %s", path)
 				collectorId := path + `:` + name
 				if reader := readerpkg.New(collectorId, file, logcPath+`.offset`, logger); reader != nil {
 					if output := outputMaker(logger); output != nil {

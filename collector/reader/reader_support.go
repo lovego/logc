@@ -39,7 +39,7 @@ func (r *Reader) seekToSavedOffset() {
 	if offset := r.offsetFile.read(); offset > 0 {
 		if size := r.size(); size >= 0 && offset <= size {
 			if _, err := r.file.Seek(offset, os.SEEK_SET); err == nil {
-				r.logger.Printf("reader: seekToSavedOffset: %d, size: %d", offset, size)
+				r.logger.Infof("reader: seekToSavedOffset: %d, size: %d", offset, size)
 			} else {
 				r.logger.Errorf("%s: reader: seekToSavedOffset: %d, size: %d, error: %v",
 					r.collectorId, offset, size, err,
@@ -57,7 +57,7 @@ func (r *Reader) seekFrontIfTruncated() {
 	if offset := r.offset(); offset > 0 {
 		if size := r.size(); size >= 0 && offset > size {
 			if _, err := r.file.Seek(0, os.SEEK_SET); err == nil {
-				r.logger.Printf("reader: seekFront(offset: %d, size: %d)", offset, size)
+				r.logger.Infof("reader: seekFront(offset: %d, size: %d)", offset, size)
 				r.reader.Reset(r.file)
 			} else {
 				r.logger.Errorf("%s: reader: seekFront(offset: %d, size: %d) error: %v",

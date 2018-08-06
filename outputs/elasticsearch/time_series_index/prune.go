@@ -21,7 +21,7 @@ func (tsi TimeSeriesIndex) Prune(client *elastic.ES) {
 		if err := client.Delete(index, nil); err != nil && !elastic.IsNotFound(err) {
 			tsi.logger.Errorf("%s: delete index %s error: %s", tsi.collectorId, index, err)
 		} else {
-			tsi.logger.Printf("pruned index: %s", index)
+			tsi.logger.Infof("pruned index: %s", index)
 		}
 	}
 }

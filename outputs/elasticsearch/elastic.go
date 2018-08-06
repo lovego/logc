@@ -18,12 +18,12 @@ func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]in
 }
 
 func (es *ElasticSearch) ensureIndex(index string, logger *loggerpkg.Logger) bool {
-	es.logger.Printf("check index: %s", index)
+	es.logger.Infof("check index: %s", index)
 	if ok, err := es.client.Exist(index); err != nil {
 		logger.Errorf("%s: check index %s existence error: %+v\n", es.collectorId, index, err)
 		return false
 	} else if !ok {
-		es.logger.Printf("create index: %s", index)
+		es.logger.Infof("create index: %s", index)
 		if err := es.client.Put(index, nil, nil); err != nil && !elastic.IsIndexAreadyExists(err) {
 			logger.Errorf("%s: create index %s error: %+v\n", es.collectorId, index, err)
 			return false

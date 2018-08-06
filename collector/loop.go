@@ -21,7 +21,7 @@ func (c *Collector) loop() {
 			}
 		case <-c.closeEvent:
 			c.collect()
-			c.logger.Printf("collector close")
+			c.logger.Infof("collector close")
 			c.close()
 			return
 		}
@@ -33,7 +33,7 @@ func (c *Collector) collect() bool {
 		rows, drain := c.reader.Read()
 		if len(rows) > 0 {
 			if c.output.Write(rows) {
-				c.logger.Printf("%d, %s\n", len(rows), c.reader.SaveOffset())
+				c.logger.Infof("%d, %s\n", len(rows), c.reader.SaveOffset())
 			} else {
 				return false
 			}
@@ -71,5 +71,5 @@ func (c *Collector) OpenedSameFile(fi os.FileInfo) bool {
 }
 
 func (c *Collector) Printf(format string, v ...interface{}) {
-	c.logger.Printf(format, v...)
+	c.logger.Infof(format, v...)
 }

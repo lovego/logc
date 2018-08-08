@@ -10,7 +10,7 @@ import (
 	loggerpkg "github.com/lovego/logger"
 )
 
-var testLogger = loggerpkg.New(``, os.Stderr, nil)
+var testLogger = loggerpkg.New(os.Stderr).SetAlarm(nil)
 
 func init() {
 	deep.CompareUnexportedFields = true

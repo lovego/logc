@@ -45,7 +45,7 @@ func TestGroup(t *testing.T) {
 	}
 	tsi := TimeSeriesIndex{
 		prefix: `test-`, timeLayout: `2006.01.02`, suffix: `-log`,
-		timeField: `at`, timeFormat: time.RFC3339, logger: loggerpkg.New(``, os.Stderr, nil),
+		timeField: `at`, timeFormat: time.RFC3339, logger: loggerpkg.New(os.Stderr).SetAlarm(nil),
 	}
 	for _, tc := range testCases {
 		got := tsi.Group(tc.input)

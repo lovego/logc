@@ -49,7 +49,7 @@ var testMapping = map[string]interface{}{
 	},
 }
 
-var testLogger = loggerpkg.New(``, os.Stderr, nil)
+var testLogger = loggerpkg.New(os.Stderr).SetAlarm(nil)
 
 var testTsi1, _ = time_series_index.New("", "app-<2006.01.02>", `at`, time.RFC3339, 0, testLogger)
 var testTsi2, _ = time_series_index.New("test.log", "app-<2006.01.02>", `at`, time.RFC3339, 3, testLogger)

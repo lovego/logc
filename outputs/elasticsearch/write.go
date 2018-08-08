@@ -57,6 +57,7 @@ func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{
 func (es *ElasticSearch) addDocId(rows []map[string]interface{}) [][2]interface{} {
 	docs := [][2]interface{}{}
 	for _, doc := range rows {
+		convertKeyWithDot(doc)
 		if uid, err := uuid.NewV4(); err != nil {
 			es.logger.Errorf("generate uuid error: %v", err)
 			docs = append(docs, [2]interface{}{nil, doc})
@@ -65,4 +66,23 @@ func (es *ElasticSearch) addDocId(rows []map[string]interface{}) [][2]interface{
 		}
 	}
 	return docs
+}
+
+// convert dot(.) in key to underline(_)
+func convertKeyWithDot(doc map[string]interface{}) {
+	for key, value := range doc {
+		if strings.ContainsRune(key, '.') {
+			newKey := strings.Replace(key, `.`, `_`, -1)
+			doc[newKey] = value
+			delete(doc, key)
+		}
+		if v, ok := value.(map[string]interface{}); ok {
+			convertKeyWithDot(v)
+		}
+		if vs, ok := value.([]map[string]interface{}); ok {
+			for _, v := range vs {
+				convertKeyWithDot(v)
+			}
+		}
+	}
 }

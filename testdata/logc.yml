@@ -9,6 +9,7 @@ mapping: &mapping
     method: { type: keyword }
     path: { type: text, fields: { raw: { type: keyword } }}
     query: { type: object }
+    rawQuery: { type: keyword }
     status: { type: keyword }
     req_body: { type: text }
     res_body: { type: text }

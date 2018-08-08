@@ -33,6 +33,7 @@ func getTestExpectConfig() Config {
 				},
 			},
 			"query":         map[interface{}]interface{}{"type": "object"},
+			"rawQuery":      map[interface{}]interface{}{"type": "keyword"},
 			"status":        map[interface{}]interface{}{"type": "keyword"},
 			"req_body":      map[interface{}]interface{}{"type": "text"},
 			"res_body":      map[interface{}]interface{}{"type": "text"},

@@ -180,7 +180,7 @@ func (es *ElasticSearch) structure(rows []interface{}, recursive bool) []map[str
 						newKey = oldKey + "_b"
 						newValue = value
 					case []map[string]interface{}:
-						newKey = oldKey + "_a"
+						newKey = oldKey + "_o"
 						newValue = es.structure(convert2InterfaceSlice(assertedValue), true)
 					case map[string]interface{}:
 						newKey = oldKey + "_o"
@@ -204,9 +204,10 @@ func (es *ElasticSearch) structure(rows []interface{}, recursive bool) []map[str
 							}
 							newValue = assertedValue
 						} else {
-							newKey = oldKey + "_a"
+							newKey = oldKey + "_o"
 							newValue = es.structure(assertedValue, true)
 							if len(newValue.([]map[string]interface{})) == 0 {
+								newKey = oldKey + "_a"
 								newValue = assertedValue
 							}
 						}

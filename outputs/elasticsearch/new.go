@@ -18,12 +18,12 @@ func Setup(logger *loggerpkg.Logger) {
 }
 
 type ElasticSearch struct {
-	collectorId string
-	addrs       []string
-	index       string
-	mapping     map[string]interface{}
-	client      *elastic.ES
-
+	collectorId     string
+	addrs           []string
+	index           string
+	mapping         map[string]interface{}
+	client          *elastic.ES
+	addTypeSuffix   bool
 	timeSeriesIndex *time_series_index.TimeSeriesIndex
 	currentIndex    string
 	logger          *loggerpkg.Logger
@@ -99,6 +99,10 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 				return false
 			}
 		case `@collectorId`, `@type`:
+		case "addTypeSuffix":
+			if value, ok := v.(bool); ok {
+				es.addTypeSuffix = value
+			}
 		default:
 			theLogger.Errorf("elasticsearch(%s) config: unknown key: %s.", es.collectorId, k)
 			return false

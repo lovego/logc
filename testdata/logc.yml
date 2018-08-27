@@ -59,7 +59,7 @@ files:
       # field used to determine which time series index to write to.
       timeField: at
       # time layout to parse "timeField". (default: RFC3339)
-      #timeFormat: "2006-01-02T15:04:05Z0700"
+      timeFormat: "2006-01-02T15:04:05Z0700"
       # the number of latest time series indices to keep. old indices will be deleted.
       indexKeep: 100
 

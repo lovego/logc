@@ -50,9 +50,6 @@ func (conf *Config) checkFiles() {
 
 func (conf *Config) setByEnv() {
 	env := os.Getenv(`GOENV`)
-	if env == `production` {
-		return
-	}
 	if env == `` {
 		env = `dev`
 	}

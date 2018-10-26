@@ -59,7 +59,7 @@ func getType(conf map[string]interface{}, collectorId string) string {
 	case `elasticsearch`:
 		return typ
 	default:
-		theLogger.Fatalf("%s: unknown @type: %s .", collectorId, typ)
+		theLogger.Fatalf("%s: unknown @type: %s", collectorId, typ)
 		return ``
 	}
 }

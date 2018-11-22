@@ -1,5 +1,5 @@
 addrs: &addrs
-  - http://127.0.0.1:9200/logc-
+  - http://127.0.0.1:9200/logc-${LOGCENV}-
 
 mapping: &mapping
   properties:

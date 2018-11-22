@@ -20,7 +20,7 @@ func Get() Config {
 		}
 		conf := parse(configFile)
 		conf.check()
-		conf.setByEnv()
+		conf.markEnv()
 		theConf = *conf
 	}
 	return theConf

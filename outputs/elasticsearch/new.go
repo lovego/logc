@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/lovego/elastic"
 	"github.com/lovego/httputil"
@@ -68,7 +69,7 @@ func (es *ElasticSearch) parseConf(conf map[string]interface{},
 		switch k {
 		case `addrs`:
 			if addrs, err := cast.ToStringSliceE(v); err == nil {
-				es.addrs = addrs
+				es.addrs = expandAddrs(addrs)
 			} else {
 				theLogger.Errorf("elasticsearch(%s) config: addrs should be an string array.", es.collectorId)
 				return false
@@ -136,4 +137,11 @@ func (es *ElasticSearch) checkConf() bool {
 		return false
 	}
 	return true
+}
+
+func expandAddrs(addrs []string) []string {
+	for i, addr := range addrs {
+		addrs[i] = os.ExpandEnv(addr)
+	}
+	return addrs
 }

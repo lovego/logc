@@ -9,13 +9,13 @@ import (
 )
 
 type Config struct {
-	Name    string                                       `yaml:"name"`
-	Mailer  string                                       `yaml:"mailer"`
-	Keepers []string                                     `yaml:"keepers"`
-	Batch   reader.Batch                                 `yaml:"batch"`
-	Rotate  Rotate                                       `yaml:"rotate"`
-	Files   map[string]map[string]map[string]interface{} `yaml:"files"`
-	// Files:  filePath   output     key     value
+	Name    string       `yaml:"name"`
+	Mailer  string       `yaml:"mailer"`
+	Keepers []string     `yaml:"keepers"`
+	Batch   reader.Batch `yaml:"batch"`
+	Rotate  Rotate       `yaml:"rotate"`
+	//       filePath  collectorId   key    value
+	Files map[string]map[string]map[string]interface{} `yaml:"files"`
 }
 
 type Rotate struct {
@@ -48,27 +48,10 @@ func (conf *Config) checkFiles() {
 	}
 }
 
-func (conf *Config) setByEnv() {
+func (conf *Config) markEnv() {
 	env := os.Getenv(`GOENV`)
 	if env == `` {
 		env = `dev`
 	}
 	conf.Name += `_` + env
-	for _, file := range conf.Files {
-		if file[`es`] != nil {
-			file[`es`][`addrs`] = addEnv2EsAddrs(file[`es`][`addrs`], env)
-		}
-	}
-}
-
-func addEnv2EsAddrs(esAddrs interface{}, env string) interface{} {
-	if addrs, ok := esAddrs.([]interface{}); ok && len(addrs) > 0 {
-		for i, addr := range addrs {
-			if address, ok := addr.(string); ok {
-				addrs[i] = address + env + `-`
-			}
-		}
-		return addrs
-	}
-	return esAddrs
 }

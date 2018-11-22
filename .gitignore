@@ -1,7 +1,7 @@
 .*.swp
 *.test
 tmp
-/logc
+logc
 /testdata/.logc/
 *.exe
 !.gitkeep

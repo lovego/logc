@@ -29,6 +29,10 @@ func (es *ElasticSearch) ensureIndex(index string, logger *loggerpkg.Logger) boo
 			return false
 		}
 	}
+	// update mapping independently to allow new fields being added.
+	if len(es.mapping) == 0 {
+		return true
+	}
 	if err := es.client.Put(index+`/_mapping/_doc`, es.mapping, nil); err != nil {
 		logger.Errorf("%s: put mapping %s/_doc error: %+v\n", es.collectorId, index, err)
 		return false

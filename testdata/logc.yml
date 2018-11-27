@@ -25,10 +25,6 @@ mapping: &mapping
         path_match: "query.*"
         mapping: { type: text, fields: { raw: { type: keyword } } }
 
-mappingConsume: &mappingConsume
-  properties:
-    at: { type: date }
-    data: { type: object }
 
 name: test     # name used for alarm
 mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
@@ -78,7 +74,10 @@ files:
     es:
       "@type": elasticsearch
       addrs: *addrs
-      index: consume-log
-      mapping: *mappingConsume
       timeField: at
       addTypeSuffix: true
+      index: consume-log
+      mapping:
+        properties:
+          at: { type: date }
+          data: { type: object }

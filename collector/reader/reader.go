@@ -54,7 +54,7 @@ func (r *Reader) readSize(targetSize int) (rows []map[string]interface{}, drain 
 	for err == nil && size < targetSize {
 		var line []byte
 		if line, err = r.readLine(); len(line) > 0 {
-			if row := r.parseLine(line); row != nil {
+			if row := r.parseLine(line); len(row) > 0 {
 				rows = append(rows, row)
 				size += len(line)
 			}

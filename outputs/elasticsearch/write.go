@@ -3,11 +3,7 @@ package elasticsearch
 import (
 	"strings"
 
-	"reflect"
-
 	"log"
-
-	"math"
 
 	"github.com/nu7hatch/gouuid"
 )
@@ -55,7 +51,7 @@ func (es *ElasticSearch) writeToIndex(index string, rows []map[string]interface{
 		return
 	}
 	if es.addTypeSuffix {
-		rows = es.structure(convert2InterfaceSlice(rows), false)
+		arrayAddTypeSuffixToMapKeys(rows, es.mapping)
 	}
 	docs := es.addDocId(rows)
 
@@ -99,140 +95,4 @@ func convertKeyWithDot(doc map[string]interface{}) {
 			}
 		}
 	}
-}
-
-func convert2InterfaceSlice(s []map[string]interface{}) []interface{} {
-	m := make([]interface{}, 0)
-
-	for _, v := range s {
-		m = append(m, interface{}(v))
-	}
-
-	return m
-}
-
-func assertInterfaceSliceSuffix(slice []interface{}) string {
-	if len(slice) == 0 {
-		return ""
-	}
-	types := map[string]string{
-		"string": "_s",
-
-		"int8":  "_i",
-		"uint8": "_i",
-
-		"int16":  "_i",
-		"uint16": "_i",
-
-		"int32":  "_i",
-		"uint32": "_i",
-
-		"int":  "_i",
-		"uint": "_i",
-
-		"int64":  "_i",
-		"uint64": "_i",
-
-		"float32": "_f",
-		"float64": "_f",
-	}
-	var typo string
-	typo = reflect.TypeOf(slice[0]).String()
-	for _, v := range slice {
-		if typo != reflect.TypeOf(v).String() {
-			return ""
-		}
-	}
-	return types[typo]
-}
-
-func suuffixForESNumberType(f float64) string {
-	if math.Trunc(f) == f {
-		return "_i"
-	} else {
-		return "_f"
-	}
-}
-
-func (es *ElasticSearch) structure(rows []interface{}, recursive bool) []map[string]interface{} {
-	rewrited := make([]map[string]interface{}, 0)
-	for _, row := range rows {
-		newRow := make(map[string]interface{}, 0)
-		var newKey string
-		var newValue interface{}
-		if assertedRow, ok := row.(map[string]interface{}); ok {
-			for oldKey, value := range assertedRow {
-				if es.has(oldKey) && !recursive {
-					newKey = oldKey
-					newValue = value
-				} else {
-					switch assertedValue := value.(type) {
-					case string:
-						newKey = oldKey + "_s"
-						newValue = value
-					case int8, uint8, int16, uint16, int, uint, int32, uint32, int64, uint64:
-						newKey = oldKey + "_i"
-						newValue = value
-					case float32, float64:
-						newKey = oldKey + suuffixForESNumberType(assertedValue.(float64))
-						newValue = value
-					case bool:
-						newKey = oldKey + "_b"
-						newValue = value
-					case []map[string]interface{}:
-						newKey = oldKey + "_o"
-						newValue = es.structure(convert2InterfaceSlice(assertedValue), true)
-					case map[string]interface{}:
-						newKey = oldKey + "_o"
-						newValue = es.structure(convert2InterfaceSlice([]map[string]interface{}{assertedValue}), true)
-						if nv, ok := newValue.([]map[string]interface{}); ok && len(nv) > 0 {
-							newValue = nv[0]
-						}
-					case []string:
-						newKey = oldKey + "_s"
-						newValue = value
-					case []int, []uint, []int8, []uint8, []int16, []uint16, []int32, []uint32, []int64, []uint64:
-						newKey = oldKey + "_i"
-						newValue = value
-					case []interface{}:
-						suffix := assertInterfaceSliceSuffix(assertedValue)
-						if suffix != "" {
-							if suffix == "_f" {
-								newKey = oldKey + suuffixForESNumberType(assertedValue[0].(float64))
-							} else {
-								newKey = oldKey + suffix
-							}
-							newValue = assertedValue
-						} else {
-							newKey = oldKey + "_o"
-							newValue = es.structure(assertedValue, true)
-							if len(newValue.([]map[string]interface{})) == 0 {
-								newKey = oldKey + "_a"
-								newValue = assertedValue
-							}
-						}
-					default:
-						continue
-					}
-				}
-				if newKey != "" {
-					newRow[newKey] = newValue
-				}
-			}
-		}
-		if len(newRow) != 0 {
-			rewrited = append(rewrited, newRow)
-		}
-	}
-	return rewrited
-}
-
-func (es *ElasticSearch) has(property string) bool {
-	if properties, ok := es.mapping["properties"]; ok {
-		if values, ok := properties.(map[string]interface{}); ok {
-			_, ok = values[property]
-			return ok
-		}
-	}
-	return false
 }

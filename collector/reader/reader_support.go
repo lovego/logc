@@ -24,7 +24,9 @@ func (r *Reader) readLine() ([]byte, error) {
 
 func (r *Reader) parseLine(line []byte) map[string]interface{} {
 	var row map[string]interface{}
-	if err := json.Unmarshal(line, &row); err == nil {
+	var decoder = json.NewDecoder(bytes.NewReader(line))
+	decoder.UseNumber()
+	if err := decoder.Decode(&row); err == nil {
 		return row
 	} else {
 		if line = bytes.TrimSpace(line); len(line) > 0 {

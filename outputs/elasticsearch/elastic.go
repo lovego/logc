@@ -5,12 +5,12 @@ import (
 	loggerpkg "github.com/lovego/logger"
 )
 
-// TODO: more error type retry
 func (es *ElasticSearch) bulkCreate(index string, docs [][2]interface{}) [][2]interface{} {
 	if errs := es.client.BulkIndex(index+`/_doc`, docs); errs != nil {
 		es.logger.Errorf("%s: bulkIndex error: %v", es.collectorId, errs)
+		// TODO: more error type retry
 		if err, ok := errs.(elastic.BulkError); ok {
-			return err.FailedItems()
+			return err.FailedItems(true)
 		}
 		return docs
 	}

@@ -5,23 +5,22 @@ import (
 )
 
 func (c *Collector) loop() {
-	// collect existing data.
+	// 收集已经存在的数据
 	if !c.collect() {
-		c.logger.Errorf("%s: collector exited.", c.id)
-		c.close()
+		c.exitActively() // 主动退出
 		return
 	}
 	for {
 		select {
 		case <-c.writeEvent:
 			if !c.collect() {
-				c.logger.Errorf("%s: collector exited.", c.id)
-				c.close()
+				c.exitActively() // 主动退出
 				return
 			}
 		case <-c.closeEvent:
 			c.collect()
-			c.logger.Infof("collector close")
+			// watch通知退出
+			c.logger.Infof("collector closed.")
 			c.close()
 			return
 		}
@@ -43,6 +42,12 @@ func (c *Collector) collect() bool {
 		}
 	}
 	return true
+}
+
+// 主动退出，watch不知道collector已经退出，仍然会发送通知。
+func (c *Collector) exitActively() {
+	c.logger.Errorf("%s: collector exited.", c.id)
+	c.close()
 }
 
 func (c *Collector) close() {

@@ -12,6 +12,7 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
+// return false to stop collector.
 func (es *ElasticSearch) Write(rows []map[string]interface{}) bool {
 	if len(rows) == 0 {
 		return true
@@ -32,8 +33,9 @@ func (es *ElasticSearch) writeToTimeSeriesIndex(rows []map[string]interface{}) b
 	prune := false
 	for _, one := range indicesRows {
 		if one.Index != es.currentIndex {
-			if !es.ensureIndex(one.Index, es.logger) {
-				return false
+			var t Timer
+			for !es.ensureIndex(one.Index, es.logger) {
+				t.Sleep()
 			}
 			es.currentIndex = one.Index
 			prune = true

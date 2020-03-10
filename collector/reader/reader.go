@@ -78,6 +78,8 @@ func (r *Reader) SaveOffset() string {
 }
 
 func (r *Reader) SameFile(fi os.FileInfo) bool {
+	// 有可能在collector主动退出时关闭了r.file，watch不知道，仍然会调用改函数。
+	// 这里不检查文件已关闭的错误，以便报警出来，关注主动退出的collector。
 	if thisFi, err := r.file.Stat(); err != nil {
 		r.logger.Errorf("%s: reader: stat error: %v", r.collectorId, err)
 		return false

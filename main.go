@@ -16,7 +16,7 @@ var logger = config.Logger()
 
 func main() {
 	conf := config.Get()
-	reader.Setup(conf.Batch, logger)
+	reader.Setup(conf.Config, logger)
 	collector.Setup(logger, config.Alarm())
 	outputs.Setup(logger)
 

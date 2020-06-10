@@ -54,14 +54,18 @@ func (r *Reader) readSize(targetSize int) (rows []map[string]interface{}, drain 
 	for err == nil && size < targetSize {
 		var line []byte
 		if line, err = r.readLine(); len(line) > 0 {
-			if row := r.parseLine(line); len(row) > 0 {
-				rows = append(rows, row)
-				size += len(line)
+			if len(line) <= maxLineSize {
+				if row := r.parseLine(line); len(row) > 0 {
+					rows = append(rows, row)
+					size += len(line)
+				}
+			} else {
+				r.logBigLine(line)
 			}
 		}
 	}
 	if err != nil {
-		drain = true // 读到文件末尾或者读取出错都认为都完了所有内容
+		drain = true // 读到文件末尾或者读取出错都认为读完了所有内容
 		if err != io.EOF {
 			r.logger.Errorf("%s: reader: read error: %v", r.collectorId, err)
 		}
@@ -78,7 +82,7 @@ func (r *Reader) SaveOffset() string {
 }
 
 func (r *Reader) SameFile(fi os.FileInfo) bool {
-	// 有可能在collector主动退出时关闭了r.file，watch不知道，仍然会调用改函数。
+	// 有可能在collector主动退出时关闭了r.file，watch不知道，仍然会调用该函数。
 	// 这里不检查文件已关闭的错误，以便报警出来，关注主动退出的collector。
 	if thisFi, err := r.file.Stat(); err != nil {
 		r.logger.Errorf("%s: reader: stat error: %v", r.collectorId, err)
@@ -93,4 +97,21 @@ func (r *Reader) Close() {
 		r.logger.Errorf("%s: reader: close error: %v", r.collectorId, err)
 	}
 	r.offsetFile.Close()
+}
+
+func (r *Reader) logBigLine(line []byte) {
+	var content []byte
+	if len(line) <= 9000 {
+		content = line
+	} else {
+		content = append(content, line[:3000]...)
+		content = append(content, "\n...\n"...)
+		content = append(content, line[len(line)-3000:]...)
+	}
+	r.logger.Errorf(
+		`%s: reader: skip a line(size: %d) exceeds maxLineSize(%d):
+
+		%s
+		`, r.collectorId, len(line), maxLineSize, content,
+	)
 }

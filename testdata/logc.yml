@@ -29,8 +29,9 @@ mapping: &mapping
 name: test     # name used for alarm
 mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
 keepers: [  ]
+maxLineSize: 819200 # max line size in bytes, lines exceeds this size is skipped.
 batch:
-  size: 102400 # how many bytes to read once
+  size: 102400 # try to read how many bytes in a batch
   wait: 3s     # how long to wait to full fill batch.size
 rotate:
   time: "33 8 1 * * *" # cron time pattern to execute rotate.cmd

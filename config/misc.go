@@ -32,7 +32,6 @@ var theLogger *logger.Logger
 func Logger() *logger.Logger {
 	if theLogger == nil {
 		theLogger = logger.New(os.Stderr)
-		theLogger.SetMachineName()
 		theLogger.SetAlarm(Alarm())
 	}
 	return theLogger

@@ -31,7 +31,6 @@ func New(path, name string, outputMaker func(*loggerpkg.Logger) outputs.Output) 
 		if logcPath := getLogcPath(path, name, file); logcPath != `` {
 			if logFile := openLogFile(logcPath + `.log`); logFile != nil {
 				logger := loggerpkg.New(logFile)
-				logger.SetMachineName()
 				logger.SetAlarm(theAlarm)
 				logger.Infof("collect %s", path)
 

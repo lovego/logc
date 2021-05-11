@@ -9,11 +9,11 @@ import (
 )
 
 type Config struct {
-	Name    string   `yaml:"name"`
-	Mailer  string   `yaml:"mailer"`
-	Keepers []string `yaml:"keepers"`
-	reader.Config
-	Rotate Rotate `yaml:"rotate"`
+	Name          string   `yaml:"name"`
+	Mailer        string   `yaml:"mailer"`
+	Keepers       []string `yaml:"keepers"`
+	reader.Config `yaml:",inline"`
+	Rotate        Rotate `yaml:"rotate"`
 	//       filePath  collectorId   key    value
 	Files map[string]map[string]map[string]interface{} `yaml:"files"`
 }

@@ -63,7 +63,10 @@ func getTestExpectConfig() Config {
 		Name:    "test_dev",
 		Mailer:  "mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh",
 		Keepers: []string{},
-		Batch:   reader.Batch{Size: 102400, Wait: "3s"},
+		Config: reader.Config{
+			MaxLineSize: 819200,
+			Batch:       reader.Batch{Size: 102400, Wait: "3s"},
+		},
 		Rotate: Rotate{
 			Time: "33 8 1 * * *",
 			Cmd:  []string{"logrotate", "logrotate.conf"},

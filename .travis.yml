@@ -1,14 +1,14 @@
 language: go
 go:
-  - "1.10"
+  - "1.16"
 before_install:
   - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.4.deb && sudo dpkg -i --force-confnew elasticsearch-6.2.4.deb && sudo service elasticsearch restart
 install:
   - go get -t ./...
-  - go get golang.org/x/tools/cmd/cover
-  - go get github.com/mattn/goveralls
 services:
   - elasticsearch
 script:
+  - set -e
   - go test -v -covermode=count -coverprofile=coverage.out ./...
+  - go get github.com/mattn/goveralls
   - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci

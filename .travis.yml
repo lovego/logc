@@ -2,7 +2,7 @@ language: go
 go:
   - "1.16"
 before_install:
-  - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.12.1-amd64.deb && sudo dpkg -i --force-confnew elasticsearch-7.12.1-amd64.deb && sudo service elasticsearch restart
+  - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.12.1-amd64.deb && sudo dpkg -i --force-confnew elasticsearch-7.12.1-amd64.deb && sudo systemctl restart elasticsearch || journalctl -ru elasticsearch
 install:
   - go get -t ./...
 services:

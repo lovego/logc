@@ -49,7 +49,7 @@ func (conf *Config) checkFiles() {
 }
 
 func (conf *Config) markEnv() {
-	env := os.Getenv(`GoEnv`)
+	env := os.Getenv(`ProENV`)
 	if env == `` {
 		env = `dev`
 	}

@@ -59,7 +59,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr,
 		`logc watch files, collect content, and push to log server, such as elasticsearch etc.
 
-version: 20.6.10
+version: 21.6.12
 usage: %s <yaml-config-file>
 `, os.Args[0])
 	flag.PrintDefaults()

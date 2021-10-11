@@ -3,11 +3,10 @@ package config
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/lovego/alarm"
+	"github.com/lovego/email"
 	"github.com/lovego/logger"
-	"github.com/lovego/mailer"
 )
 
 var theAlarm *alarm.Alarm
@@ -15,13 +14,14 @@ var theAlarm *alarm.Alarm
 func Alarm() *alarm.Alarm {
 	if theAlarm == nil {
 		conf := Get()
-		m, err := mailer.New(conf.Mailer)
+		m, err := email.NewClient(conf.Mailer)
 		if err != nil {
 			log.Panic(err)
 		}
 		theAlarm = alarm.New(
 			alarm.MailSender{Receivers: conf.Keepers, Mailer: m},
-			0, 5*time.Second, 30*time.Second, alarm.SetPrefix(conf.Name+`_logc`),
+			nil,
+			alarm.SetPrefix(conf.Name+`_logc`),
 		)
 	}
 	return theAlarm

@@ -20,7 +20,7 @@ func Get() Config {
 		}
 		conf := parse(configFile)
 		conf.check()
-		conf.markEnv()
+		conf.Name = os.ExpandEnv(conf.Name)
 		theConf = *conf
 	}
 	return theConf
@@ -59,7 +59,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr,
 		`logc watch files, collect content, and push to log server, such as elasticsearch etc.
 
-version: 21.10.11
+version: 21.11.05
 usage: %s <yaml-config-file>
 `, os.Args[0])
 	flag.PrintDefaults()

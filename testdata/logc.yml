@@ -26,7 +26,7 @@ mapping: &mapping
         mapping: { type: text, fields: { raw: { type: keyword } } }
 
 
-name: test     # name used for alarm
+name: test.$ProENV    # name used for alarm
 mailer: mailer://smtp.qq.com:25/?user=小美<xiaomei-go@qq.com>&pass=zjsbosjlhgugechh
 keepers: [  ]
 maxLineSize: 819200 # max line size in bytes, lines exceeds this size is skipped.

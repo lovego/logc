@@ -21,7 +21,7 @@ func Alarm() *alarm.Alarm {
 		theAlarm = alarm.New(
 			alarm.MailSender{Receivers: conf.Keepers, Mailer: m},
 			nil,
-			alarm.SetPrefix(conf.Name+`_logc`),
+			alarm.SetPrefix(conf.Name),
 		)
 	}
 	return theAlarm

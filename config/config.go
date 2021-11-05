@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/lovego/logc/collector/reader"
@@ -46,12 +45,4 @@ func (conf *Config) checkFiles() {
 			}
 		}
 	}
-}
-
-func (conf *Config) markEnv() {
-	env := os.Getenv(`ProENV`)
-	if env == `` {
-		env = `dev`
-	}
-	conf.Name += `_` + env
 }
